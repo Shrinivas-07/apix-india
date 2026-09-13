@@ -24,17 +24,10 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install Python packages
+           - name: Install Python packages
         run: |
           pip install --upgrade pip
-          pip install playwright==1.40.0
-          pip install httpx==0.24.1
-          pip install gotrue==1.3.0
-          pip install postgrest==0.10.8
-          pip install supabase==1.2.0
-          pip install python-dotenv
-          pip install fastapi
-          pip install uvicorn
+          pip install -r requirements.txt
 
       - name: Install Chromium browser
         run: playwright install --with-deps chromium
