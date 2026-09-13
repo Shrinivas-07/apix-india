@@ -13,13 +13,16 @@ jobs:
     env:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+      PLAYWRIGHT_BROWSERS_PATH: 0
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Set up Python 3.11
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5.6.0
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -37,7 +40,15 @@ jobs:
           pip install uvicorn
 
       - name: Install Chromium browser
-        run: playwright install --with-deps chromium
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y chromium-browser
+          python -m playwright install chromium
+
+      - name: Verify browser install
+        run: |
+          chromium-browser --version
+          python -c "from playwright.sync_api import sync_playwright; p = sync_playwright().start(); b = p.chromium.launch(); print('Playwright OK'); b.close(); p.stop()"
 
       - name: Run scraper
         run: |
