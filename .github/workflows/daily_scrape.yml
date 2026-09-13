@@ -1,0 +1,71 @@
+name: Daily Airfare Scrape
+
+on:
+  schedule:
+    - cron: '0 18 * * *'
+  workflow_dispatch:
+
+jobs:
+  scrape-and-index:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4.2.2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v5.6.0
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Python packages
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Chromium browser
+        run: |
+          python -m playwright install chromium --with-deps
+
+      - name: Verify browser
+        run: |
+          python -c "
+          from playwright.sync_api import sync_playwright
+          with sync_playwright() as p:
+              browser = p.chromium.launch(headless=True)
+              page = browser.new_page()
+              page.goto('https://example.com')
+              print('Browser OK — title:', page.title())
+              browser.close()
+          "
+
+      - name: Run scraper
+        run: |
+          echo "Starting scrape at $(date)"
+          python scraper/run_scraper.py
+          echo "Scrape complete at $(date)"
+
+      - name: Calculate index
+        run: |
+          echo "Computing APIx at $(date)"
+          python index/calculate_index.py
+          echo "Index saved"
+
+      - name: Print database stats
+        run: |
+          python -c "
+          import sys; sys.path.insert(0,'.')
+          from backend.database import get_stats_cloud
+          stats = get_stats_cloud()
+          print('=== SCRAPE SUMMARY ===')
+          for k,v in stats.items():
+              print(f'  {k}: {v}')
+          "
