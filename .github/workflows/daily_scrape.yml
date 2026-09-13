@@ -33,12 +33,20 @@ jobs:
       # ── 3. Install dependencies ───────────────────────────────────────────
       - name: Install Python packages
         run: |
-          pip install --upgrade pip
-          pip install playwright==1.40.0 supabase==1.2.0 python-dotenv fastapi
+          sudo apt-get update
+          sudo apt-get install -y \
+            libnss3 \
+            libatk-bridge2.0-0 \
+            libdrm2 \
+            libxkbcommon0 \
+            libgbm1 \
+            libasound2t64
 
       # ── 4. Install Playwright browser ─────────────────────────────────────
       - name: Install Chromium browser
-        run: playwright install chromium --with-deps
+        run: |
+          playwright install chromium
+          playwright install-deps chromium
 
       # ── 5. Run scraper (all routes × all windows) ─────────────────────────
       - name: Run scraper
