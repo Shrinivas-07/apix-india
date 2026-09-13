@@ -1,0 +1,15 @@
+[
+  {
+    "carrier": "IndiGo",
+    "origin": "DEL",
+    "destination": "BOM",
+    "travel_date": "2026-09-14",
+    "scraped_at": "2026-09-13T00:40:08.075713",
+    "total_fare": 1515,
+    "base_fare": 1242,
+    "taxes": 273,
+    "currency": "INR",
+    "fare_class": "Economy",
+    "source": "indigo_direct"
+  }
+]

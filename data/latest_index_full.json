@@ -1,0 +1,12 @@
+{
+  "index_date": "2026-09-13",
+  "apix_value": 100.0,
+  "advance_window": 7,
+  "routes_used": 8,
+  "total_weight_used": 100.0,
+  "base_date": "2026-09-13",
+  "computed_at": "2026-09-13T10:19:17.466512",
+  "route_breakdown": [
+    {
+      "route": "DEL-BOM",
+      "name": 

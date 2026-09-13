@@ -1,0 +1,14 @@
+{
+  "created_date": "2026-09-13",
+  "headline_window": 7,
+  "routes": {
+    "DEL-BOM": 12650.25,
+    "DEL-BLR": 12650.25,
+    "BOM-BLR": 12650.25,
+    "DEL-CCU": 12650.25,
+    "MAA-DEL": 12650.25,
+    "BLR-HYD": 12650.25,
+    "BOM-HYD": 12650.25,
+    "CCU-BOM": 12650.25
+  }
+}

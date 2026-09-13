@@ -1,0 +1,54 @@
+[
+  {
+    "carrier": "Multiple",
+    "origin": "DEL",
+    "destination": "BOM",
+    "travel_date": "2026-09-14",
+    "scraped_at": "2026-09-13T01:04:44.329954",
+    "total_fare": 9625,
+    "base_fare": 7892,
+    "taxes": 1732,
+    "currency": "INR",
+    "fare_class": "Economy",
+    "source": "google_flights"
+  },
+  {
+    "carrier": "Multiple",
+    "origin": "DEL",
+    "destination": "BOM",
+    "travel_date": "2026-09-14",
+    "scraped_at": "2026-09-13T01:04:44.329954",
+    "total_fare": 16694,
+    "base_fare": 13689,
+    "taxes": 3005,
+    "currency": "INR",
+    "fare_class": "Economy",
+    "source": "google_flights"
+  },
+  {
+    "carrier": "Multiple",
+    "origin": "DEL",
+    "destination": "BOM",
+    "travel_date": "2026-09-14",
+    "scraped_at": "2026-09-13T01:04:44.329954",
+    "total_fare": 16879,
+    "base_fare": 13841,
+    "taxes": 3038,
+    "currency": "INR",
+    "fare_class": "Economy",
+    "source": "google_flights"
+  },
+  {
+    "carrier": "Multiple",
+    "origin": "DEL",
+    "destination": "BOM",
+    "travel_date": "2026-09-14",
+    "scraped_at": "2026-09-13T01:04:44.329954",
+    "total_fare": 18511,
+    "base_fare": 15179,
+    "taxes": 3332,
+    "currency": "INR",
+    "fare_class": "Economy",
+    "source": "google_flights"
+  }
+]
