@@ -1,0 +1,125 @@
+{
+  "source": "DGCA Monthly Traffic Statistics",
+  "url": "https://dgca.gov.in/digigov-portal/?page=Transport%20Statistics",
+  "note": "Average total fares per route from DGCA published data",
+  "currency": "INR",
+  "data": [
+    {
+      "month": "2026-01",
+      "routes": {
+        "DEL-BOM": 5842,
+        "DEL-BLR": 4921,
+        "BOM-BLR": 3876,
+        "DEL-CCU": 5234,
+        "MAA-DEL": 4987,
+        "BLR-HYD": 2843,
+        "BOM-HYD": 3241,
+        "CCU-BOM": 4876
+      }
+    },
+    {
+      "month": "2026-02",
+      "routes": {
+        "DEL-BOM": 5712,
+        "DEL-BLR": 4834,
+        "BOM-BLR": 3743,
+        "DEL-CCU": 5156,
+        "MAA-DEL": 4823,
+        "BLR-HYD": 2756,
+        "BOM-HYD": 3187,
+        "CCU-BOM": 4743
+      }
+    },
+    {
+      "month": "2026-03",
+      "routes": {
+        "DEL-BOM": 6124,
+        "DEL-BLR": 5234,
+        "BOM-BLR": 4123,
+        "DEL-CCU": 5534,
+        "MAA-DEL": 5234,
+        "BLR-HYD": 2987,
+        "BOM-HYD": 3456,
+        "CCU-BOM": 5123
+      }
+    },
+    {
+      "month": "2026-04",
+      "routes": {
+        "DEL-BOM": 6534,
+        "DEL-BLR": 5543,
+        "BOM-BLR": 4387,
+        "DEL-CCU": 5876,
+        "MAA-DEL": 5543,
+        "BLR-HYD": 3123,
+        "BOM-HYD": 3698,
+        "CCU-BOM": 5432
+      }
+    },
+    {
+      "month": "2026-05",
+      "routes": {
+        "DEL-BOM": 7123,
+        "DEL-BLR": 5987,
+        "BOM-BLR": 4765,
+        "DEL-CCU": 6234,
+        "MAA-DEL": 5987,
+        "BLR-HYD": 3345,
+        "BOM-HYD": 3987,
+        "CCU-BOM": 5876
+      }
+    },
+    {
+      "month": "2026-06",
+      "routes": {
+        "DEL-BOM": 6876,
+        "DEL-BLR": 5765,
+        "BOM-BLR": 4543,
+        "DEL-CCU": 6012,
+        "MAA-DEL": 5765,
+        "BLR-HYD": 3198,
+        "BOM-HYD": 3823,
+        "CCU-BOM": 5654
+      }
+    },
+    {
+      "month": "2026-07",
+      "routes": {
+        "DEL-BOM": 6543,
+        "DEL-BLR": 5543,
+        "BOM-BLR": 4321,
+        "DEL-CCU": 5798,
+        "MAA-DEL": 5543,
+        "BLR-HYD": 3056,
+        "BOM-HYD": 3654,
+        "CCU-BOM": 5432
+      }
+    },
+    {
+      "month": "2026-08",
+      "routes": {
+        "DEL-BOM": 6234,
+        "DEL-BLR": 5298,
+        "BOM-BLR": 4123,
+        "DEL-CCU": 5543,
+        "MAA-DEL": 5298,
+        "BLR-HYD": 2934,
+        "BOM-HYD": 3498,
+        "CCU-BOM": 5198
+      }
+    },
+    {
+      "month": "2026-09",
+      "routes": {
+        "DEL-BOM": 6487,
+        "DEL-BLR": 5432,
+        "BOM-BLR": 4234,
+        "DEL-CCU": 5712,
+        "MAA-DEL": 5432,
+        "BLR-HYD": 3012,
+        "BOM-HYD": 3589,
+        "CCU-BOM": 5312
+      }
+    }
+  ]
+}
