@@ -17,6 +17,8 @@ sys.path.insert(0, ".")
 from scraper.routes   import ROUTES, ADVANCE_WINDOWS
 from scraper.cleaner  import clean_fares
 from scraper.database import setup_database, save_fares, get_stats
+from dotenv import load_dotenv
+load_dotenv()
 from scraper.sites.google_flights import scrape_google_flights
 
 
@@ -28,7 +30,7 @@ HEADLESS = False              # True = invisible browser, False = visible (debug
 async def scrape_one_window(origin, destination, advance_days):
     """
     Scrapes one route for one advance window.
-    e.g. DEL→BOM for travel date = today + 7 days
+    Saves to Supabase if configured, otherwise local SQLite.
     """
     travel_date = (datetime.now() + timedelta(days=advance_days)).strftime("%Y-%m-%d")
 
@@ -40,7 +42,18 @@ async def scrape_one_window(origin, destination, advance_days):
     try:
         raw_fares = await scrape_google_flights(origin, destination, travel_date)
         cleaned   = clean_fares(raw_fares, origin, destination)
-        saved     = save_fares(cleaned, advance_days=advance_days)
+
+        # Try Supabase first, fall back to local SQLite
+        try:
+            from backend.database import save_fares_cloud, USE_SUPABASE
+            if USE_SUPABASE:
+                saved = save_fares_cloud(cleaned, advance_days=advance_days)
+            else:
+                saved = save_fares(cleaned, advance_days=advance_days)
+        except Exception as e:
+            print(f"  [Supabase] Failed, using local: {e}")
+            saved = save_fares(cleaned, advance_days=advance_days)
+
         return saved
     except Exception as e:
         print(f"  [ERROR] {origin}→{destination} T+{advance_days}: {e}")
