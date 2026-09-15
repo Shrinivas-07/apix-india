@@ -205,4 +205,3 @@ To integrate APIx into CPI computation:
 2. Use `apix_value` field as the Transport sub-group input
 3. Use `route_breakdown` for route-level analysis
 4. Call `/api/index/history?days=90` for quarterly trend analysis
-
