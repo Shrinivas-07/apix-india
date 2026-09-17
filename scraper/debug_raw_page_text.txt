@@ -21,29 +21,29 @@ Duration
 Bags
 About these results
 Singapore
-Sep 13 – 19
+Sep 17 – 23
 Dubai
-Sep 13 – 19
+Sep 17 – 23
 Hong Kong
 Oct 1 – 7
 Tokyo
-Sep 13 – 19
+Sep 17 – 23
 Bangkok
-Sep 13 – 19
+Sep 17 – 23
 Bengaluru
-Sep 18 – 24
+Sep 24 – 30
 Nonstop
 3 hr 5 min
 ₹16,879
 Varanasi
-Sep 18 – 25
-Nonstop
+Sep 25 – Oct 1
+1 stop
 1 hr 15 min
-₹9,625
+₹10,126
 Chennai
 Sep 24 – Oct 3
 1 stop
-6 hr 15 min
+5 hr 10 min
 ₹18,511
 Kolkata
 Sep 27 – Oct 3
@@ -77,7 +77,7 @@ Phuket
 Bengaluru
 ₹16,879
 Varanasi
-₹9,625
+₹10,126
 Chennai
 Manila
 Colombo
