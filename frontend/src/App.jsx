@@ -1,19 +1,24 @@
-// src/App.jsx — router shell
-import { Routes, Route } from "react-router-dom"
+// src/App.jsx
+import { Routes, Route, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
-import Navbar from "./components/Navbar"
-import Home      from "./pages/Home"
-import IndexPage from "./pages/Index"
-import Routes_   from "./pages/Routes"
-import RoutePage from "./pages/RoutePage"
-import Search    from "./pages/Search"
-import Analytics from "./pages/Analytics"
-import Backtest  from "./pages/Backtest"
-import ApiDocs   from "./pages/ApiDocs"
+import { AnimatePresence } from "framer-motion"
+import Navbar          from "./components/Navbar"
+import Footer          from "./components/Footer"
+import PageTransition  from "./components/PageTransition"
+import Home            from "./pages/Home"
+import IndexPage       from "./pages/Index"
+import RoutesPage      from "./pages/Routes"
+import RoutePage       from "./pages/RoutePage"
+import Search          from "./pages/Search"
+import Analytics       from "./pages/Analytics"
+import Backtest        from "./pages/Backtest"
+import ApiDocs         from "./pages/ApiDocs"
 import { fetchLatestIndex } from "./api"
 import { gradients } from "./styles/theme"
+import NotFound from "./pages/NotFound"
 
 export default function App() {
+  const location = useLocation()
   const [apix, setApix] = useState(null)
 
   useEffect(() => {
@@ -24,29 +29,53 @@ export default function App() {
 
   return (
     <div style={{
-      minHeight: "100vh",
-      background: gradients.hero,
-      position: "relative",
+      minHeight:"100vh",
+      background:gradients.hero,
+      position:"relative",
     }}>
-      {/* Mesh gradient overlay */}
+      {/* Mesh gradient */}
       <div style={{
-        position: "fixed", inset: 0,
-        background: gradients.mesh,
-        pointerEvents: "none", zIndex: 0,
+        position:"fixed", inset:0,
+        background:gradients.mesh,
+        pointerEvents:"none", zIndex:0,
       }} />
 
-      <div style={{ position: "relative", zIndex: 1 }}>
+      <div style={{ position:"relative", zIndex:1 }}>
         <Navbar apix={apix} />
-        <Routes>
-          <Route path="/"          element={<Home />} />
-          <Route path="/index"     element={<IndexPage />} />
-          <Route path="/routes"    element={<Routes_ />} />
-          <Route path="/route/:id" element={<RoutePage />} />
-          <Route path="/search"    element={<Search />} />
-          <Route path="/analytics" element={<Analytics />} />
-          <Route path="/backtest"  element={<Backtest />} />
-          <Route path="/api"       element={<ApiDocs />} />
-        </Routes>
+
+        <AnimatePresence mode="wait">
+          <Routes location={location} key={location.pathname}>
+            <Route path="/" element={
+              <PageTransition><Home /></PageTransition>
+            } />
+            <Route path="/index" element={
+              <PageTransition><IndexPage /></PageTransition>
+            } />
+            <Route path="/routes" element={
+              <PageTransition><RoutesPage /></PageTransition>
+            } />
+            <Route path="/route/:id" element={
+              <PageTransition><RoutePage /></PageTransition>
+            } />
+            <Route path="/search" element={
+              <PageTransition><Search /></PageTransition>
+            } />
+            <Route path="/analytics" element={
+              <PageTransition><Analytics /></PageTransition>
+            } />
+            <Route path="/backtest" element={
+              <PageTransition><Backtest /></PageTransition>
+            } />
+            <Route path="/api" element={
+              <PageTransition><ApiDocs /></PageTransition>
+            } />
+            <Route path="*" element={
+              <PageTransition><NotFound /></PageTransition>
+            } />
+          </Routes>
+        </AnimatePresence>
+
+        <Footer />
       </div>
     </div>
   )
