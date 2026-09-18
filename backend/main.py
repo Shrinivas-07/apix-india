@@ -12,6 +12,7 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
+from sys import supabase_get
 import sys
 import os
 import json

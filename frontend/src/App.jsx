@@ -16,6 +16,7 @@ import ApiDocs         from "./pages/ApiDocs"
 import { fetchLatestIndex } from "./api"
 import { gradients } from "./styles/theme"
 import NotFound from "./pages/NotFound"
+import { wakeServer } from "./api"
 
 export default function App() {
   const location = useLocation()
@@ -25,6 +26,11 @@ export default function App() {
     fetchLatestIndex()
       .then(d => setApix(d?.apix_value))
       .catch(() => {})
+  }, [])
+
+    // Wake Render server on app load (free tier sleeps)
+  useEffect(() => {
+    wakeServer()
   }, [])
 
   return (

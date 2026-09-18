@@ -9,6 +9,7 @@ import {
 import GlassCard    from "../components/GlassCard"
 import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
+import { fetchSearchFares } from "../api"
 import { colors, glass } from "../styles/theme"
 
 // ── Airport data ──────────────────────────────────────────────────────────────
@@ -429,21 +430,49 @@ export default function Search() {
     }
   }, [])
 
-  function handleSearch() {
+    async function handleSearch() {
     if (!from || !to || from === to) return
     setSearching(true)
     setSearched(false)
 
-    // Simulate network delay
-    setTimeout(() => {
+    try {
+      // Try real API first
+      const data = await fetchSearchFares(from, to, date)
+      const real = data.fares ?? []
+
+      if (real.length > 0) {
+        // Use real data — enrich with display fields
+        const enriched = real.map((f, i) => ({
+          ...f,
+          flight_number:  f.flight_number ?? `XX-${100+i}`,
+          departure_time: f.departure_time ?? ["06:00","08:30","11:00","14:30","18:00"][i%5],
+          arrival_time:   f.arrival_time   ?? ["08:10","10:45","13:15","16:40","20:10"][i%5],
+          duration:       f.duration       ?? "2h 10m",
+          total_fare:     f.total_fare     ?? (f.base_fare + f.taxes),
+          total_price:    (f.total_fare ?? (f.base_fare + f.taxes)) * passengers,
+          passengers,
+          stops:          0,
+          ontime:         Math.round(75 + Math.random() * 20),
+        }))
+        setResults(enriched)
+        setMaxFare(Math.max(...enriched.map(f => f.total_fare)) + 1000)
+      } else {
+        // Fall back to generated data
+        const r = generateResults(from, to, date, passengers)
+        setResults(r)
+        setMaxFare(Math.max(...r.map(f => f.total_fare)) + 1000)
+      }
+    } catch {
+      // Fall back to generated data on error
       const r = generateResults(from, to, date, passengers)
-      const h = generatePriceHistory(from, to, date)
       setResults(r)
-      setHistory(h)
       setMaxFare(Math.max(...r.map(f => f.total_fare)) + 1000)
-      setSearching(false)
-      setSearched(true)
-    }, 1200)
+    }
+
+    // Always generate history chart (no real historical per-search data yet)
+    setHistory(generatePriceHistory(from, to, date))
+    setSearching(false)
+    setSearched(true)
   }
 
   // ── Filtered + sorted results ─────────────────────────────────────────────

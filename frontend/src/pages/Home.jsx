@@ -14,7 +14,7 @@ import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
 import {
   fetchLatestIndex, fetchIndexHistory,
-  fetchRoutes, fetchStats
+  fetchRoutes, fetchStats, fetchLiveFeed
 } from "../api"
 import { colors, glass, gradients, text, spacing, radius } from "../styles/theme"
 
