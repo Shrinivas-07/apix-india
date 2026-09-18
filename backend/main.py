@@ -109,6 +109,23 @@ def get_latest_index_from_db():
         return None
 
 
+def supabase_get(table: str, params: dict):
+    """Run a read query using the same parameter format as the API endpoints."""
+    query = get_client().table(table).select(params.get("select", "*"))
+    for key, value in params.items():
+        if key in {"select", "order", "limit"}:
+            continue
+        operator, filter_value = value.split(".", 1)
+        query = getattr(query, operator)(key, filter_value)
+    if "order" in params:
+        column, direction = params["order"].split(".", 1)
+        query = query.order(column, desc=direction == "desc")
+    if "limit" in params:
+        query = query.limit(int(params["limit"]))
+    result = query.execute()
+    return result.data or []
+
+
 def compute_route_heatmap():
     """
     Builds heatmap data — avg fare per route for last 7 days
@@ -417,10 +434,10 @@ def get_stats():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-    @app.get("/api/route/{origin}/{destination}/fares")
-    def get_route_fares(origin: str, destination: str,
+@app.get("/api/route/{origin}/{destination}/fares")
+def get_route_fares(origin: str, destination: str,
                     advance_days: int = 7, limit: int = 50):
-        """
+    """
     Returns recent individual fare records for a route.
     Used for flight listing on route page and search.
     """
