@@ -12,6 +12,7 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
+from sys import supabase_get
 import sys
 import os
 import json
@@ -362,8 +363,6 @@ def get_route_detail(origin: str, destination: str):
         "carrier_summary": carrier_summary,
         "recent_count":    len(recent_fares),
     }
-
-
 @app.get("/api/stats")
 def get_stats():
     """
@@ -381,6 +380,134 @@ def get_stats():
                  "weight": r["weight"]}
                 for r in ROUTES
             ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+    @app.get("/api/route/{origin}/{destination}/fares")
+    def get_route_fares(origin: str, destination: str,
+                    advance_days: int = 7, limit: int = 50):
+        """
+    Returns recent individual fare records for a route.
+    Used for flight listing on route page and search.
+    """
+    origin      = origin.upper()
+    destination = destination.upper()
+
+    try:
+        cutoff = (datetime.now() - timedelta(days=3)).isoformat()
+        result = supabase_get("raw_fares", {
+            "select":       "*",
+            "origin":       f"eq.{origin}",
+            "destination":  f"eq.{destination}",
+            "advance_days": f"eq.{advance_days}",
+            "is_outlier":   "eq.false",
+            "scraped_at":   f"gte.{cutoff}",
+            "order":        "base_fare.asc",
+            "limit":        str(limit),
+        })
+        return {
+            "origin":      origin,
+            "destination": destination,
+            "advance_days": advance_days,
+            "count":       len(result),
+            "fares":       result,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/live/feed")
+def get_live_feed(limit: int = 20):
+    """
+    Returns most recent fare changes for the live feed.
+    Shows latest scraped fares across all routes.
+    """
+    try:
+        cutoff = (datetime.now() - timedelta(hours=24)).isoformat()
+        result = supabase_get("raw_fares", {
+            "select":     "carrier,origin,destination,base_fare,scraped_at,advance_days",
+            "is_outlier": "eq.false",
+            "scraped_at": f"gte.{cutoff}",
+            "order":      "scraped_at.desc",
+            "limit":      str(limit),
+        })
+        return { "count": len(result), "feed": result }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/search")
+def search_fares(origin: str, destination: str,
+                 date: str = None, limit: int = 100):
+    """
+    Search fares for a specific route.
+    Returns all carrier fares sorted by price.
+    """
+    origin      = origin.upper()
+    destination = destination.upper()
+
+    try:
+        params = {
+            "select":      "*",
+            "origin":      f"eq.{origin}",
+            "destination": f"eq.{destination}",
+            "is_outlier":  "eq.false",
+            "order":       "base_fare.asc",
+            "limit":       str(limit),
+        }
+        if date:
+            params["travel_date"] = f"eq.{date}"
+
+        result = supabase_get("raw_fares", params)
+        return {
+            "origin":      origin,
+            "destination": destination,
+            "date":        date,
+            "count":       len(result),
+            "fares":       result,
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/analytics/summary")
+def get_analytics_summary():
+    """
+    Returns analytics data — route averages, advance window summary.
+    """
+    try:
+        cutoff = (datetime.now() - timedelta(days=30)).isoformat()
+        fares  = supabase_get("raw_fares", {
+            "select":     "origin,destination,base_fare,advance_days,scraped_at",
+            "is_outlier": "eq.false",
+            "scraped_at": f"gte.{cutoff}",
+            "limit":      "5000",
+        })
+
+        # Group by advance window
+        windows = {}
+        for f in fares:
+            adv = f.get("advance_days")
+            if adv not in windows:
+                windows[adv] = []
+            windows[adv].append(f["base_fare"])
+
+        window_summary = []
+        for adv in sorted(k for k in windows if k):
+            vals = windows[adv]
+            window_summary.append({
+                "advance_days": adv,
+                "avg_fare":     round(sum(vals)/len(vals)),
+                "min_fare":     min(vals),
+                "max_fare":     max(vals),
+                "count":        len(vals),
+            })
+
+        return {
+            "total_records":  len(fares),
+            "window_summary": window_summary,
+            "period_days":    30,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
