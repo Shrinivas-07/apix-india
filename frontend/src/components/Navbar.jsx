@@ -4,6 +4,7 @@ import { useState } from "react"
 import { colors, glass, gradients } from "../styles/theme"
 import { useEffect } from "react"
 import { fetchHealth } from "../api"
+import useLiveData from "../hooks/useLiveData"
 
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
