@@ -371,6 +371,32 @@ export default function Home() {
     load()
   }, [])
 
+    // Merge WebSocket feed with REST feed
+  useEffect(() => {
+    if (!liveWs?.recent_fares?.length) return
+
+    const wsFeed = liveWs.recent_fares.slice(0, 6).map((r, i) => {
+      const prev   = liveWs.recent_fares[i+1]?.base_fare ?? r.base_fare
+      const change = prev
+        ? +((r.base_fare - prev) / prev * 100).toFixed(1) : 0
+      const mins   = Math.round(
+        (Date.now() - new Date(r.scraped_at)) / 60000
+      )
+      return {
+        route:   `${r.origin}-${r.destination}`,
+        carrier: r.carrier ?? "—",
+        from:    prev,
+        to:      r.base_fare,
+        change,
+        time:    mins < 1 ? "just now"
+               : mins < 60 ? `${mins} min ago`
+               : `${Math.floor(mins/60)}h ago`,
+      }
+    })
+
+    if (wsFeed.length > 0) setFeed(wsFeed)
+  }, [liveWs])
+
   // ── Generate live feed ────────────────────────────────────────────────────
   useEffect(() => {
     const items = [
