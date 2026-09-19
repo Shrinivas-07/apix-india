@@ -35,6 +35,12 @@ export async function fetchStats() {
   return res.json()
 }
 
+export async function fetchHealth() {
+  const res = await fetch(`${BACKEND_URL}/`)
+  if (!res.ok) throw new Error("Failed to fetch health status")
+  return res.json()
+}
+
 export async function wakeServer() {
   const res = await fetch(`${BACKEND_URL}/`)
   if (!res.ok) throw new Error("Failed to wake server")

@@ -2,6 +2,8 @@
 import { NavLink, useLocation } from "react-router-dom"
 import { useState } from "react"
 import { colors, glass, gradients } from "../styles/theme"
+import { useEffect } from "react"
+import { fetchHealth } from "../api"
 
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
@@ -16,6 +18,25 @@ const links = [
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
+  const [scrapeStatus, setScrapeStatus] = useState(null)
+
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL ?? 
+            "https://apix-india-api.onrender.com"}/api/live/status`
+        )
+        const data = await res.json()
+        setScrapeStatus(data)
+      } catch {
+        // Silent fail
+      }
+    }
+    checkStatus()
+    const timer = setInterval(checkStatus, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   return (
     <>
@@ -85,6 +106,29 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
+
+
+                  {scrapeStatus && (
+            <div style={{
+              fontSize:10, color: scrapeStatus.status === "fresh"
+                ? colors.green : colors.amber,
+              display:"flex", alignItems:"center", gap:4,
+            }}
+            title={`Last scrape: ${scrapeStatus.minutes_ago} min ago`}>
+              <span style={{
+                width:6, height:6, borderRadius:"50%",
+                background: scrapeStatus.status === "fresh"
+                  ? colors.green : colors.amber,
+                display:"inline-block",
+              }} />
+              {scrapeStatus.minutes_ago
+                ? `${scrapeStatus.minutes_ago}m ago`
+                : "live"}
+            </div>
+          )}
+
+
+        
         <div style={{
           display: "flex", alignItems: "center", gap: 10
         }}>
@@ -102,6 +146,9 @@ export default function Navbar({ apix }) {
               </span>
             </div>
           )}
+
+
+                
 
           {/* Mobile menu button */}
           <button
