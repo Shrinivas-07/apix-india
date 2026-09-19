@@ -32,8 +32,9 @@ LIVE_WINDOWS = [1, 7]
 SEARCH_DELAY = 25
 
 
-async def scrape_one_live(origin, destination, advance_days):
-    """Scrapes one route — with memory check."""
+async def scrape_one_live(origin: str, destination: str,
+                           advance_days: int) -> int:
+    """Scrapes one route+window and saves to Supabase."""
     try:
         import psutil
         mem = psutil.virtual_memory()
@@ -47,18 +48,6 @@ async def scrape_one_live(origin, destination, advance_days):
         from scraper.sites.google_flights import scrape_google_flights
         from scraper.cleaner import clean_fares
         from backend.database import save_fares_cloud
-        
-    except ImportError:
-        log.error("[Live] Missing dependencies for scraping")
-        return 0
-
-async def scrape_one_live(origin: str, destination: str,
-                           advance_days: int) -> int:
-    """Scrapes one route+window and saves to Supabase."""
-    try:
-        from scraper.sites.google_flights import scrape_google_flights
-        from scraper.cleaner import clean_fares
-        from backend.database import save_fares_cloud
 
         travel_date = (
             datetime.now() + timedelta(days=advance_days)
@@ -67,7 +56,7 @@ async def scrape_one_live(origin: str, destination: str,
         log.info(f"[Live] Scraping {origin}→{destination} T+{advance_days} "
                  f"(travel {travel_date})")
 
-        raw   = await scrape_google_flights(origin, destination, travel_date)
+        raw = await scrape_google_flights(origin, destination, travel_date)
         clean = clean_fares(raw, origin, destination)
         saved = save_fares_cloud(clean, advance_days=advance_days)
 
@@ -75,6 +64,9 @@ async def scrape_one_live(origin: str, destination: str,
                  f"{saved} fares saved")
         return saved
 
+    except ImportError:
+        log.error("[Live] Missing dependencies for scraping")
+        return 0
     except Exception as e:
         log.error(f"[Live] Error {origin}→{destination} T+{advance_days}: {e}")
         return 0
