@@ -12,6 +12,8 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
+from fastapi import WebSocket, WebSocketDisconnect
+from typing import List
 from contextlib import asynccontextmanager
 import asyncio
 from sys import supabase_get
