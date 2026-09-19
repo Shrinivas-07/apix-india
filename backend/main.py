@@ -12,7 +12,6 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
-import os
 from contextlib import asynccontextmanager
 import asyncio
 from sys import supabase_get
@@ -555,53 +554,47 @@ def get_analytics_summary():
             })
 
         return {
-            "total_records":  len(fares),
-            "window_summary": window_summary,
-            "period_days":    30,
-        }
+        "total_records":  len(fares),
+        "window_summary": window_summary,
+        "period_days":    30,
+    }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 
-    @app.get("/api/live/status")
-    def get_live_status():
-     """
+@app.get("/api/live/status")
+def get_live_status():
+    """
     Returns live scraper status and last scrape time.
     """
     try:
-        # Get most recent scrape timestamp
         recent = supabase_get("raw_fares", {
             "select":  "scraped_at,origin,destination",
             "order":   "scraped_at.desc",
             "limit":   "1",
         })
 
-        last_scrape  = None
-        last_route   = None
-        minutes_ago  = None
+        last_scrape = None
+        last_route = None
+        minutes_ago = None
 
         if recent:
             last_scrape = recent[0]["scraped_at"]
-            last_route  = (f"{recent[0]['origin']}"
-                           f"-{recent[0]['destination']}")
-            dt          = datetime.fromisoformat(
-                last_scrape.replace("Z", "+00:00")
-            )
-            minutes_ago = round(
-                (datetime.now(dt.tzinfo) - dt).seconds / 60
-            )
+            last_route = f"{recent[0]['origin']}-{recent[0]['destination']}"
+            dt = datetime.fromisoformat(last_scrape.replace("Z", "+00:00"))
+            minutes_ago = round((datetime.now(dt.tzinfo) - dt).total_seconds() / 60)
 
-        enabled = os.getenv("ENABLE_LIVE_SCRAPER","false").lower() == "true"
+        enabled = os.getenv("ENABLE_LIVE_SCRAPER", "false").lower() == "true"
 
         return {
             "live_scraper_enabled": enabled,
-            "last_scrape":          last_scrape,
-            "last_route":           last_route,
-            "minutes_ago":          minutes_ago,
-            "status": "fresh"    if (minutes_ago is not None and minutes_ago < 20)
+            "last_scrape": last_scrape,
+            "last_route": last_route,
+            "minutes_ago": minutes_ago,
+            "status": "fresh" if (minutes_ago is not None and minutes_ago < 20)
                       else "stale" if (minutes_ago is not None and minutes_ago < 60)
                       else "old",
-            "interval_minutes":     15,
+            "interval_minutes": 15,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
