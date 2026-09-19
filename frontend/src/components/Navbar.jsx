@@ -4,6 +4,7 @@ import { useState } from "react"
 import { colors, glass, gradients } from "../styles/theme"
 import { useEffect } from "react"
 import { fetchHealth } from "../api"
+import useLiveData from "../hooks/useLiveData"
 
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
@@ -19,6 +20,7 @@ export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const location = useLocation()
   const [scrapeStatus, setScrapeStatus] = useState(null)
+    const { connected: wsOn } = useLiveData()
 
   useEffect(() => {
     async function checkStatus() {
@@ -106,6 +108,19 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
+
+                  {/* WS indicator dot */}
+          <div
+            title={wsOn ? "WebSocket connected" : "Using polling"}
+            style={{
+              width:8, height:8, borderRadius:"50%",
+              background: wsOn ? colors.green : colors.amber,
+              boxShadow: wsOn
+                ? `0 0 6px ${colors.green}`
+                : `0 0 6px ${colors.amber}`,
+              animation: wsOn ? "pulse-dot 2s infinite" : "none",
+              flexShrink:0,
+            }} />
 
 
                   {scrapeStatus && (
