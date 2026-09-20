@@ -12,6 +12,7 @@ import LiveBadge    from "../components/LiveBadge"
 import FlightRow    from "../components/FlightRow"
 import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
+import useLiveData  from "../hooks/useLiveData"
 import {
   fetchLatestIndex, fetchIndexHistory,
   fetchRoutes, fetchStats, fetchLiveFeed
@@ -326,6 +327,7 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
 // ── Main Home component ───────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate()
+  const { data: liveWs } = useLiveData()
 
   // Data states
   const [loading,  setLoading]  = useState(true)
