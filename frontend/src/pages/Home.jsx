@@ -20,81 +20,7 @@ import {
 const BACKEND_URL = "https://apix-india-api.onrender.com"
 import { colors, glass, gradients, text, spacing, radius } from "../styles/theme"
 
-
-// ── Live scraper status card ──────────────────────────────────────────────────
-function LiveStatusCard() {
-  const [status, setStatus] = useState(null)
-
-  useEffect(() => {
-    async function load() {
-      try {
-        const res  = await fetch(`${BACKEND_URL}/api/live/status`)
-        const data = await res.json()
-        setStatus(data)
-      } catch {}
-    }
-    load()
-    const t = setInterval(load, 5 * 60 * 1000)
-    return () => clearInterval(t)
-  }, [])
-
-  if (!status) return null
-
-  const isLive   = status.status === "fresh"
-  const color    = isLive ? colors.green : colors.amber
-  const bgColor  = isLive
-    ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)"
-  const bdColor  = isLive
-    ? "rgba(16,185,129,0.2)"  : "rgba(245,158,11,0.2)"
-
-  return (
-    <div style={{
-      background: bgColor, border:`1px solid ${bdColor}`,
-      borderRadius:12, padding:"14px 20px",
-      display:"flex", alignItems:"center",
-      justifyContent:"space-between",
-      flexWrap:"wrap", gap:12, marginBottom:24,
-    }}>
-      <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-        <div style={{
-          width:10, height:10, borderRadius:"50%",
-          background: color,
-          boxShadow:`0 0 8px ${color}`,
-          animation:"pulse-dot 1.5s ease infinite",
-        }} />
-        <div>
-          <div style={{ fontSize:13, fontWeight:600, color }}>
-            {isLive ? "Data is fresh" : "Data may be stale"}
-          </div>
-          <div style={{ fontSize:11, color:colors.textSecondary }}>
-            Last scrape: {status.minutes_ago ?? "—"} min ago ·{" "}
-            Route: {status.last_route ?? "—"}
-          </div>
-        </div>
-      </div>
-      <div style={{ display:"flex", gap:20, flexWrap:"wrap" }}>
-        {[
-          { label:"Scraper",   value: status.live_scraper_enabled
-              ? "Running" : "Scheduled", },
-          { label:"Interval",  value: `${status.interval_minutes} min` },
-          { label:"Status",    value: status.status },
-        ].map(item => (
-          <div key={item.label} style={{ textAlign:"center" }}>
-            <div style={{ fontSize:10, color:colors.textMuted,
-                          textTransform:"uppercase",
-                          letterSpacing:"0.06em" }}>
-              {item.label}
-            </div>
-            <div style={{ fontSize:13, fontWeight:600,
-                          color:colors.textPrimary, marginTop:2 }}>
-              {item.value}
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  )
-}
+     
 
 // ── Airport data for search ───────────────────────────────────────────────────
 const AIRPORTS = [
@@ -320,6 +246,80 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
           ))}
         </div>
       )}
+    </div>
+  )
+}
+
+function LiveStatusCard() {
+  const [status, setStatus] = useState(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/live/status`)
+        const data = await res.json()
+        setStatus(data)
+      } catch {
+        // ignore transient status fetch failures
+      }
+    }
+
+    load()
+    const timer = setInterval(load, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  if (!status) return null
+
+  const isLive = status.status === "fresh"
+  const color = isLive ? colors.green : colors.amber
+  const bgColor = isLive ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)"
+  const bdColor = isLive ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"
+
+  return (
+    <div style={{
+      background: bgColor, border: `1px solid ${bdColor}`,
+      borderRadius: 12, padding: "14px 20px",
+      display: "flex", alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap", gap: 12, marginBottom: 24,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{
+          width: 10, height: 10, borderRadius: "50%",
+          background: color,
+          boxShadow: `0 0 8px ${color}`,
+          animation: "pulse-dot 1.5s ease infinite",
+        }} />
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color }}>
+            {isLive ? "Data is fresh" : "Data may be stale"}
+          </div>
+          <div style={{ fontSize: 11, color: colors.textSecondary }}>
+            Last scrape: {status.minutes_ago ?? "—"} min ago ·
+            Route: {status.last_route ?? "—"}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        {[
+          { label: "Scraper", value: status.live_scraper_enabled ? "Running" : "Scheduled" },
+          { label: "Interval", value: `${status.interval_minutes} min` },
+          { label: "Status", value: status.status },
+        ].map(item => (
+          <div key={item.label} style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: colors.textMuted,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em" }}>
+              {item.label}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600,
+                          color: colors.textPrimary, marginTop: 2 }}>
+              {item.value}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -949,11 +949,7 @@ export default function Home() {
       </div>
 
       {/* ── Live Feed ─────────────────────────────────────────────────────── */}
-
-            {/* ── Live Scraper Status ───────────────────────────────────────────── */}
       <LiveStatusCard />
-
-
 
       <GlassCard>
         <div style={{ display: "flex", justifyContent: "space-between",
