@@ -13,6 +13,7 @@ import FlightRow    from "../components/FlightRow"
 import BookingPanel from "../components/BookingPanel"
 import { fetchRouteDetail, fetchIndexHistory } from "../api"
 import { colors, glass } from "../styles/theme"
+import FareRangeChart from "../components/FareRangeChart"
 
 // ── Route config ──────────────────────────────────────────────────────────────
 const ROUTE_META = {
@@ -821,6 +822,25 @@ export default function RoutePage() {
               </div>
             )
           )}
+
+                      {/* Fare range chart */}
+            {detail?.lead_time_curve?.length > 0 && (
+              <div style={{ marginTop:24 }}>
+                <div style={{ fontSize:14, fontWeight:600,
+                              color:colors.textPrimary,
+                              marginBottom:4 }}>
+                  Fare Range Analysis
+                </div>
+                <div style={{ fontSize:12, color:colors.textSecondary,
+                              marginBottom:14 }}>
+                  Min · Avg · Max range per booking window
+                </div>
+                <FareRangeChart
+                  data={detail.lead_time_curve}
+                  height={220}
+                />
+              </div>
+            )}
 
           {/* Route stats table */}
           <div style={{ marginTop: 24 }}>

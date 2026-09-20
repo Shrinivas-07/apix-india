@@ -8,6 +8,7 @@ const LINKS = {
     { label:"Index",       to:"/index"     },
     { label:"All Routes",  to:"/routes"    },
     { label:"Search",      to:"/search"    },
+    { label:"Compare",     to:"/compare"   },
   ],
   "Analytics": [
     { label:"Analytics",   to:"/analytics" },

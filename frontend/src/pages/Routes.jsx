@@ -432,6 +432,24 @@ export default function RoutesPage() {
               onClick={() => navigate(`/route/${route.route}`)}
             />
           ))}
+                {/* Compare link */}
+      <div style={{ marginTop:10, paddingTop:10,
+                    borderTop:`1px solid ${colors.border}`,
+                    display:"flex", gap:8 }}>
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            window.location.href = `/compare?a=${route.route}`
+          }}
+          style={{
+            fontSize:11, padding:"4px 10px",
+            borderRadius:6, border:`1px solid ${colors.border}`,
+            background:"transparent",
+            color:colors.textMuted, cursor:"pointer",
+          }}>
+          ⚖ Compare
+        </button>
+      </div>
         </div>
       )}
 
