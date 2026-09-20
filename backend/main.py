@@ -107,6 +107,9 @@ async def lifespan(app: FastAPI):
     broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
     print("[Startup] WebSocket broadcast loop started")
 
+    broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
+    print("[Startup] WebSocket broadcast loop started")
+
     yield  # Server runs here
 
     # Cleanup on shutdown
