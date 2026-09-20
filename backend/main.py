@@ -12,10 +12,8 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
-
 from fastapi import WebSocket, WebSocketDisconnect
 from typing import List
-import json
 from contextlib import asynccontextmanager
 import asyncio
 from sys import supabase_get
@@ -51,7 +49,6 @@ try:
 except ImportError:
     async def live_scraper_loop(interval_minutes=15):
         pass
-
 
     # ── WebSocket connection manager ──────────────────────────────────────────────
 class ConnectionManager:
@@ -106,6 +103,9 @@ async def lifespan(app: FastAPI):
     else:
         print("[Startup] Live scraper DISABLED — set ENABLE_LIVE_SCRAPER=true to enable")
         task = None
+         # Always start WebSocket broadcast loop
+    broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
+    print("[Startup] WebSocket broadcast loop started")
 
     broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
     print("[Startup] WebSocket broadcast loop started")
@@ -648,9 +648,9 @@ def get_live_status():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.websocket("/ws/live")
-async def websocket_live(websocket: WebSocket):
-    """
+    @app.websocket("/ws/live")
+    async def websocket_live(websocket: WebSocket):
+     """
     WebSocket endpoint for live dashboard updates.
     Sends fresh data every 30 seconds to all connected clients.
     """
