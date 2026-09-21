@@ -87,6 +87,7 @@ export default function FlightRow({ flight, onBook }) {
       {/* Book button */}
       <button
         onClick={() => onBook && onBook(flight)}
+        className="full-mobile"
         style={{
           background: "linear-gradient(135deg, #3b82f6, #1d4ed8)",
           border: "none", borderRadius: 10,
@@ -96,6 +97,8 @@ export default function FlightRow({ flight, onBook }) {
           boxShadow: "0 4px 16px rgba(59,130,246,0.35)",
           transition: "all 0.15s",
         }}
+        
+      
         onMouseEnter={e => e.target.style.transform = "scale(1.04)"}
         onMouseLeave={e => e.target.style.transform = "scale(1)"}>
         Book Now →

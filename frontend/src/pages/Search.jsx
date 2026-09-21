@@ -673,13 +673,18 @@ export default function Search() {
 
       {/* ── Results ───────────────────────────────────────────────────────── */}
       {searched && !searching && (
-        <div style={{ display:"grid",
-                      gridTemplateColumns:"280px 1fr",
-                      gap:20, alignItems:"start" }}>
+                  <div style={{
+            display:"grid",
+            gridTemplateColumns:"clamp(220px, 25%, 280px) 1fr",
+            gap:20, alignItems:"start",
+          }}
+          className="stack-mobile">
 
           {/* ── Sidebar filters ───────────────────────────────────────────── */}
-          <div style={{ display:"flex", flexDirection:"column",
-                        gap:16, position:"sticky", top:80 }}>
+                    <div style={{ display:"flex", flexDirection:"column",
+                        gap:16, position:"sticky", top:80,
+                        maxHeight:"calc(100vh - 100px)",
+                        overflowY:"auto" }}>
 
             {/* Route summary */}
             <GlassCard style={{ padding:18 }}>

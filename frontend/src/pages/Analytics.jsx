@@ -162,9 +162,9 @@ function SavingsCalculator() {
       </div>
 
       {/* Results */}
-      <div style={{ display:"grid",
-                    gridTemplateColumns:"repeat(3,1fr)",
-                    gap:14 }}>
+            <div style={{ display:"grid",
+                    gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",
+                    gap:12 }}>
         {[
           { label:"Last-minute fare", value:`₹${lastMin.toLocaleString("en-IN")}`,
             sub:"T+1 booking", color:colors.red },
@@ -523,9 +523,9 @@ export default function Analytics() {
           </GlassCard>
 
           {/* Festival cards */}
-          <div style={{ display:"grid",
-                        gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",
-                        gap:16 }}>
+           <div style={{ display:"grid",
+                        gridTemplateColumns:"repeat(auto-fill,minmax(min(280px,100%),1fr))",
+                        gap:14 }}>
             {FESTIVALS.sort((a,b) => b.surge-a.surge).map(f => (
               <GlassCard key={f.name} style={{
                 borderLeft:`3px solid ${

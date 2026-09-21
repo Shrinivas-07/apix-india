@@ -172,7 +172,7 @@ export default function Navbar({ apix }) {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
-              display: "none", // shown via media query
+              
               background: "transparent", border: "none",
               color: colors.textPrimary, fontSize: 20,
               cursor: "pointer", padding: 8,
