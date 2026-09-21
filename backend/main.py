@@ -12,6 +12,8 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
+from fastapi import WebSocket, WebSocketDisconnect
+from typing import List
 from contextlib import asynccontextmanager
 import asyncio
 import sys
@@ -102,6 +104,9 @@ async def lifespan(app: FastAPI):
         print("[Startup] Live scraper DISABLED — set ENABLE_LIVE_SCRAPER=true to enable")
         task = None
          # Always start WebSocket broadcast loop
+    broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
+    print("[Startup] WebSocket broadcast loop started")
+
     broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
     print("[Startup] WebSocket broadcast loop started")
 
