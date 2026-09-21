@@ -5,18 +5,6 @@ import { colors, glass } from "../styles/theme"
 
 const BACKEND_URL = "https://apix-india-api.onrender.com"
 
-function formatScrapeTime(value) {
-  if (!value) return "No data time"
-
-  const date = new Date(value)
-  if (Number.isNaN(date.getTime())) return "Unknown data time"
-
-  return new Intl.DateTimeFormat(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  }).format(date)
-}
-
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
   { to: "/index",     label: "Index",     icon: "📈" },
@@ -48,6 +36,15 @@ export default function Navbar({ apix }) {
     const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
+
+  function formatScrapeStatus(status) {
+    if (status?.status === "fresh") return "LIVE"
+    if (status?.minutes_ago == null) return "OFFLINE"
+    if (status.minutes_ago >= 1440) {
+      return `STALE · ${Math.floor(status.minutes_ago / 1440)}d ago`
+      }
+    return `STALE · ${status.minutes_ago}m ago`
+    }
 
   return (
     <>
@@ -117,28 +114,22 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
-
-
-                  {scrapeStatus && (
+        {scrapeStatus && (
             <div style={{
               fontSize:10, color: scrapeStatus.status === "fresh"
                 ? colors.green : colors.amber,
               display:"flex", alignItems:"center", gap:4,
             }}
-            title={`Last scrape: ${formatScrapeTime(scrapeStatus.last_scrape)}${
-              scrapeStatus.minutes_ago == null
-                ? ""
-                : ` (${scrapeStatus.minutes_ago} min ago)`
-            }`}>
+            title={`Last scrape: ${scrapeStatus.minutes_ago ?? "unknown"} min ago`}>
               <span style={{
                 width:6, height:6, borderRadius:"50%",
                 background: scrapeStatus.status === "fresh"
                   ? colors.green : colors.amber,
                 display:"inline-block",
               }} />
-              {formatScrapeTime(scrapeStatus.last_scrape)}
+              {formatScrapeStatus(scrapeStatus)}
             </div>
-          )}
+        )}
 
 
         
