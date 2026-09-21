@@ -4,6 +4,7 @@ import { useState } from "react"
 import { colors, glass, gradients } from "../styles/theme"
 import { useEffect } from "react"
 import { fetchHealth } from "../api"
+import useLiveData from "../hooks/useLiveData"
 
 const BACKEND_URL = "https://apix-india-api.onrender.com"
 
@@ -22,25 +23,7 @@ export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState(null)
   const location = useLocation()
-    const { connected: wsOn } = useLiveData()
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL ?? 
-            "https://apix-india-api.onrender.com"}/api/live/status`
-        )
-        const data = await res.json()
-        setScrapeStatus(data)
-      } catch {
-        // Silent fail
-      }
-    }
-    checkStatus()
-    const timer = setInterval(checkStatus, 5 * 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
+  const { connected: wsOn } = useLiveData()
 
   useEffect(() => {
     async function loadScrapeStatus() {
@@ -54,6 +37,20 @@ export default function Navbar({ apix }) {
     const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
+
+  useEffect(() => {
+    if (!wsOn) return
+    setScrapeStatus(status => status ? { ...status, websocket_connected: true } : status)
+  }, [wsOn])
+
+  function formatScrapeStatus(status) {
+    if (status?.status === "fresh") return "LIVE"
+    if (status?.minutes_ago == null) return "OFFLINE"
+    if (status.minutes_ago >= 1440) {
+      return `STALE · ${Math.floor(status.minutes_ago / 1440)}d ago`
+      }
+    return `STALE · ${status.minutes_ago}m ago`
+    }
 
   return (
     <>
@@ -123,24 +120,22 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
-                  {scrapeStatus && (
+        {scrapeStatus && (
             <div style={{
               fontSize:10, color: scrapeStatus.status === "fresh"
                 ? colors.green : colors.amber,
               display:"flex", alignItems:"center", gap:4,
             }}
-            title={`Last scrape: ${scrapeStatus.minutes_ago} min ago`}>
+            title={`Last scrape: ${scrapeStatus.minutes_ago ?? "unknown"} min ago`}>
               <span style={{
                 width:6, height:6, borderRadius:"50%",
                 background: scrapeStatus.status === "fresh"
                   ? colors.green : colors.amber,
                 display:"inline-block",
               }} />
-              {scrapeStatus.minutes_ago
-                ? `${scrapeStatus.minutes_ago}m ago`
-                : "live"}
+              {formatScrapeStatus(scrapeStatus)}
             </div>
-          )}
+        )}
 
 
         
