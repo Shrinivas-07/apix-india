@@ -23,7 +23,6 @@ export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState(null)
   const location = useLocation()
-  const [scrapeStatus, setScrapeStatus] = useState(null)
 
   useEffect(() => {
     async function checkStatus() {
