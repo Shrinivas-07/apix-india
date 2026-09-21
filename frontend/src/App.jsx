@@ -76,6 +76,9 @@ export default function App() {
             <Route path="/api" element={
               <PageTransition><ApiDocs /></PageTransition>
             } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
+            } />
             <Route path="*" element={
               <PageTransition><NotFound /></PageTransition>
             } />

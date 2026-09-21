@@ -6,13 +6,14 @@ import {
   Tooltip, ResponsiveContainer, ReferenceLine,
   Area, AreaChart, ComposedChart, Bar
 } from "recharts"
+import useLiveData      from "../hooks/useLiveData"
+import AnimatedNumber   from "../components/AnimatedNumber"
 import GlassCard    from "../components/GlassCard"
 import StatCard     from "../components/StatCard"
 import LiveBadge    from "../components/LiveBadge"
 import FlightRow    from "../components/FlightRow"
 import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
-import useLiveData  from "../hooks/useLiveData"
 import {
   fetchLatestIndex, fetchIndexHistory,
   fetchRoutes, fetchStats, fetchLiveFeed
@@ -285,12 +286,6 @@ function LiveStatusCard() {
       flexWrap: "wrap", gap: 12, marginBottom: 24,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 10, height: 10, borderRadius: "50%",
-          background: color,
-          boxShadow: `0 0 8px ${color}`,
-          animation: "pulse-dot 1.5s ease infinite",
-        }} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color }}>
             {isLive ? "Data is fresh" : "Data may be stale"}
@@ -328,6 +323,10 @@ function LiveStatusCard() {
 export default function Home() {
   const navigate = useNavigate()
   const { data: liveWs } = useLiveData()
+
+    // ── Live WebSocket data ───────────────────────────────────────────────────
+  const { connected: wsConnected,
+          lastUpdate: wsLastUpdate } = useLiveData()
 
   // Data states
   const [loading,  setLoading]  = useState(true)
@@ -426,6 +425,7 @@ export default function Home() {
 
   // ── Derived values ────────────────────────────────────────────────────────
   const apix       = latest?.apix_value ?? 100
+  const liveApix   = liveWs?.apix ?? apix
   const apixDelta  = +(apix - 100).toFixed(1)
   const isUp       = apixDelta > 0
 
@@ -464,32 +464,53 @@ export default function Home() {
                   padding: "40px 20px 80px" }}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div style={{ textAlign: "center", marginBottom: 48 }}>
-        <div style={{ display: "flex", justifyContent: "center",
-                      marginBottom: 16 }}>
-          <LiveBadge label="LIVE · Updates every 15 min" />
-        </div>
-
-        <h1 style={{
-          fontSize: "clamp(32px, 6vw, 64px)",
-          fontWeight: 900, letterSpacing: "-2px",
-          lineHeight: 1.05, marginBottom: 16,
-          background: "linear-gradient(135deg, #f0f4ff 30%, #60a5fa 70%, #a78bfa)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}>
-          India's Real-time<br />Airfare Price Index
-        </h1>
-
-        <p style={{
-          fontSize: 16, color: colors.textSecondary,
-          maxWidth: 520, margin: "0 auto",
-          lineHeight: 1.7,
-        }}>
-          Automated daily tracking of domestic airfares across major
-          Indian routes. Built for MoSPI · NSO · RBI.
-        </p>
+      <div style={{ display: "flex", justifyContent: "center",
+                    marginBottom: 16, gap: 10,
+                    alignItems: "center", flexWrap: "wrap" }}>
+        <LiveBadge label="AUTO · Target refresh every 15 min" />
+        {wsConnected && (
+          <div style={{
+            fontSize: 11, color: colors.green,
+            display: "flex", alignItems: "center", gap: 4,
+            background: "rgba(16,185,129,0.08)",
+            border: "1px solid rgba(16,185,129,0.2)",
+            padding: "3px 10px", borderRadius: 99,
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: colors.green,
+              display: "inline-block",
+              animation: "pulse-dot 1.5s infinite",
+            }} />
+            WebSocket connected
+          </div>
+        )}
+        {wsLastUpdate && (
+          <div style={{ fontSize: 11, color: colors.textMuted }}>
+            Updated {wsLastUpdate.toLocaleTimeString("en-IN")}
+          </div>
+        )}
       </div>
+
+      <h1 style={{
+        fontSize: "clamp(32px, 6vw, 64px)",
+        fontWeight: 900, letterSpacing: "-2px",
+        lineHeight: 1.05, marginBottom: 16,
+        background: "linear-gradient(135deg, #f0f4ff 30%, #60a5fa 70%, #a78bfa)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
+      }}>
+        India's Real-time<br />Airfare Price Index
+      </h1>
+
+      <p style={{
+        fontSize: 16, color: colors.textSecondary,
+        maxWidth: 520, margin: "0 auto",
+        lineHeight: 1.7,
+      }}>
+        Automated daily tracking of domestic airfares across major
+        Indian routes. Built for MoSPI · NSO · RBI.
+      </p>
 
       {/* ── KPI Cards ────────────────────────────────────────────────────── */}
             <div style={{
@@ -497,10 +518,18 @@ export default function Home() {
         gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
         gap: 12, marginBottom: 24,
       }}>
-        <StatCard
+                <StatCard
           label="National APIx"
           icon="📊"
-          value={loading ? "—" : apix.toFixed(1)}
+          value={loading ? "—" : (
+            <AnimatedNumber
+              value={liveApix ?? 100}
+              decimals={1}
+              style={{ fontSize:32, fontWeight:800,
+                       letterSpacing:"-1px" }}
+            />
+          )}
+          
           sub={loading ? null
             : `${isUp ? "▲" : "▼"} ${Math.abs(apixDelta)} pts vs base period`}
           subUp={isUp}
