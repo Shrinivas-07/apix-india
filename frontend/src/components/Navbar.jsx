@@ -6,20 +6,23 @@ import { useEffect } from "react"
 import { fetchHealth } from "../api"
 import useLiveData from "../hooks/useLiveData"
 
+const BACKEND_URL = "https://apix-india-api.onrender.com"
+
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
   { to: "/index",     label: "Index",     icon: "📈" },
   { to: "/routes",    label: "Routes",    icon: "🗺" },
   { to: "/search",    label: "Search",    icon: "🔍" },
   { to: "/analytics", label: "Analytics", icon: "📊" },
+  { to: "/compare",   label: "Compare",   icon: "⚖" },
   { to: "/backtest",  label: "Back-test", icon: "✅" },
   { to: "/api",       label: "API Docs",  icon: "🔌" },
 ]
 
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
   const [scrapeStatus, setScrapeStatus] = useState(null)
+  const location = useLocation()
     const { connected: wsOn } = useLiveData()
 
   useEffect(() => {
@@ -37,6 +40,19 @@ export default function Navbar({ apix }) {
     }
     checkStatus()
     const timer = setInterval(checkStatus, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    async function loadScrapeStatus() {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/live/status`)
+        if (response.ok) setScrapeStatus(await response.json())
+      } catch {}
+    }
+
+    loadScrapeStatus()
+    const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
 

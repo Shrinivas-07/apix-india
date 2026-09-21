@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell
 } from "recharts"
+import FareRangeChart from "../components/FareRangeChart"
 import GlassCard    from "../components/GlassCard"
 import LiveBadge    from "../components/LiveBadge"
 import Skeleton     from "../components/Skeleton"
@@ -821,6 +822,25 @@ export default function RoutePage() {
               </div>
             )
           )}
+
+                      {/* Fare range chart */}
+            {detail?.lead_time_curve?.length > 0 && (
+              <div style={{ marginTop:24 }}>
+                <div style={{ fontSize:14, fontWeight:600,
+                              color:colors.textPrimary,
+                              marginBottom:4 }}>
+                  Fare Range Analysis
+                </div>
+                <div style={{ fontSize:12, color:colors.textSecondary,
+                              marginBottom:14 }}>
+                  Min · Avg · Max range per booking window
+                </div>
+                <FareRangeChart
+                  data={detail.lead_time_curve}
+                  height={220}
+                />
+              </div>
+            )}
 
           {/* Route stats table */}
           <div style={{ marginTop: 24 }}>

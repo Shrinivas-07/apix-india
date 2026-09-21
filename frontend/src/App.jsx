@@ -1,4 +1,5 @@
 // src/App.jsx
+import Compare from "./pages/Compare"
 import { Routes, Route, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { AnimatePresence } from "framer-motion"
@@ -77,6 +78,9 @@ export default function App() {
             } />
             <Route path="*" element={
               <PageTransition><NotFound /></PageTransition>
+            } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
             } />
           </Routes>
         </AnimatePresence>

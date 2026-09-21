@@ -328,9 +328,10 @@ function LiveStatusCard() {
 // ── Main Home component ───────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate()
+  const { data: liveWs } = useLiveData()
 
     // ── Live WebSocket data ───────────────────────────────────────────────────
-  const { data: liveWs, connected: wsConnected,
+  const { connected: wsConnected,
           lastUpdate: wsLastUpdate } = useLiveData()
 
   // Data states
