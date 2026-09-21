@@ -1,12 +1,21 @@
 // src/components/Navbar.jsx
-import { NavLink, useLocation } from "react-router-dom"
-import { useState } from "react"
-import { colors, glass, gradients } from "../styles/theme"
-import { useEffect } from "react"
-import { fetchHealth } from "../api"
-import useLiveData from "../hooks/useLiveData"
+import { NavLink } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { colors, glass } from "../styles/theme"
 
 const BACKEND_URL = "https://apix-india-api.onrender.com"
+
+function formatScrapeTime(value) {
+  if (!value) return "No data time"
+
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return "Unknown data time"
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date)
+}
 
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
@@ -22,32 +31,16 @@ const links = [
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState(null)
-  const location = useLocation()
-  
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL ?? 
-            "https://apix-india-api.onrender.com"}/api/live/status`
-        )
-        const data = await res.json()
-        setScrapeStatus(data)
-      } catch {
-        // Silent fail
-      }
-    }
-    checkStatus()
-    const timer = setInterval(checkStatus, 5 * 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     async function loadScrapeStatus() {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/live/status`)
-        if (response.ok) setScrapeStatus(await response.json())
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL ?? BACKEND_URL}/api/live/status`
+        )
+        if (response.ok) {
+          setScrapeStatus(await response.json())
+        }
       } catch {}
     }
 
@@ -132,16 +125,18 @@ export default function Navbar({ apix }) {
                 ? colors.green : colors.amber,
               display:"flex", alignItems:"center", gap:4,
             }}
-            title={`Last scrape: ${scrapeStatus.minutes_ago} min ago`}>
+            title={`Last scrape: ${formatScrapeTime(scrapeStatus.last_scrape)}${
+              scrapeStatus.minutes_ago == null
+                ? ""
+                : ` (${scrapeStatus.minutes_ago} min ago)`
+            }`}>
               <span style={{
                 width:6, height:6, borderRadius:"50%",
                 background: scrapeStatus.status === "fresh"
                   ? colors.green : colors.amber,
                 display:"inline-block",
               }} />
-              {scrapeStatus.minutes_ago
-                ? `${scrapeStatus.minutes_ago}m ago`
-                : "live"}
+              {formatScrapeTime(scrapeStatus.last_scrape)}
             </div>
           )}
 
