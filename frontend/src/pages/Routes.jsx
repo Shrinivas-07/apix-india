@@ -186,6 +186,24 @@ function RouteCard({ route, liveData, onClick }) {
         fontSize: 18, color: colors.textMuted,
         transition: "transform 0.15s, color 0.15s",
       }}>→</div>
+
+      <div style={{ marginTop: 10, paddingTop: 10,
+                    borderTop: `1px solid ${colors.border}`,
+                    display: "flex", gap: 8 }}>
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            window.location.href = `/compare?a=${route.route}`
+          }}
+          style={{
+            fontSize: 11, padding: "4px 10px",
+            borderRadius: 6, border: `1px solid ${colors.border}`,
+            background: "transparent",
+            color: colors.textMuted, cursor: "pointer",
+          }}>
+          ⚖ Compare
+        </button>
+      </div>
     </div>
   )
 }
@@ -452,7 +470,6 @@ export default function RoutesPage() {
       </div>
         </div>
       )}
-
       {/* ── Footer note ──────────────────────────────────────────────────── */}
       <div style={{
         marginTop: 40, textAlign: "center",

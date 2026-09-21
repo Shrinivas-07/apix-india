@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell
 } from "recharts"
+import FareRangeChart from "../components/FareRangeChart"
 import GlassCard    from "../components/GlassCard"
 import LiveBadge    from "../components/LiveBadge"
 import Skeleton     from "../components/Skeleton"

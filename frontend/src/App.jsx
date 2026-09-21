@@ -82,6 +82,9 @@ export default function App() {
             <Route path="*" element={
               <PageTransition><NotFound /></PageTransition>
             } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
+            } />
           </Routes>
         </AnimatePresence>
 

@@ -5,6 +5,8 @@ import { colors, glass, gradients } from "../styles/theme"
 import { useEffect } from "react"
 import { fetchHealth } from "../api"
 
+const BACKEND_URL = "https://apix-india-api.onrender.com"
+
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
   { to: "/index",     label: "Index",     icon: "📈" },
@@ -18,8 +20,9 @@ const links = [
 
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
   const [scrapeStatus, setScrapeStatus] = useState(null)
+  const location = useLocation()
+    const { connected: wsOn } = useLiveData()
 
   useEffect(() => {
     async function checkStatus() {
@@ -36,6 +39,19 @@ export default function Navbar({ apix }) {
     }
     checkStatus()
     const timer = setInterval(checkStatus, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  useEffect(() => {
+    async function loadScrapeStatus() {
+      try {
+        const response = await fetch(`${BACKEND_URL}/api/live/status`)
+        if (response.ok) setScrapeStatus(await response.json())
+      } catch {}
+    }
+
+    loadScrapeStatus()
+    const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
 
