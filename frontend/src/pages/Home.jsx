@@ -286,12 +286,6 @@ function LiveStatusCard() {
       flexWrap: "wrap", gap: 12, marginBottom: 24,
     }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <div style={{
-          width: 10, height: 10, borderRadius: "50%",
-          background: color,
-          boxShadow: `0 0 8px ${color}`,
-          animation: "pulse-dot 1.5s ease infinite",
-        }} />
         <div>
           <div style={{ fontSize: 13, fontWeight: 600, color }}>
             {isLive ? "Data is fresh" : "Data may be stale"}
