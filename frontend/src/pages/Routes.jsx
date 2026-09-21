@@ -281,10 +281,10 @@ export default function RoutesPage() {
       </div>
 
       {/* ── Summary cards ────────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))",
-        gap: 14, marginBottom: 28,
+        gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))",
+        gap: 10, marginBottom: 20,
       }}>
         {[
           { label:"Avg fare",    value:`₹${avgFare.toLocaleString("en-IN")}`,
@@ -341,6 +341,7 @@ export default function RoutesPage() {
                 borderRadius: 10, padding: "10px 14px 10px 36px",
                 color: colors.textPrimary, fontSize: 13,
                 outline: "none",
+                width: "100%",
               }} />
           </div>
 
@@ -405,10 +406,10 @@ export default function RoutesPage() {
 
       {/* ── Route grid ───────────────────────────────────────────────────── */}
       {loading ? (
-        <div style={{
+                <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 16
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
+          gap: 16,
         }}>
           {[...Array(8)].map((_, i) => (
             <Skeleton key={i} h={200} radius={16} />

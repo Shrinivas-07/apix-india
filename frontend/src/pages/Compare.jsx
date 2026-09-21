@@ -302,8 +302,8 @@ export default function Compare() {
       </GlassCard>
 
       {/* Route name headers */}
-      <div style={{ display:"grid",
-                    gridTemplateColumns:"1fr 1fr",
+            <div style={{ display:"grid",
+                    gridTemplateColumns:"repeat(auto-fit,minmax(200px,1fr))",
                     gap:16, marginBottom:20 }}>
         {[
           { route:routeA, color:colors.blue,   detail:detailA },
@@ -580,8 +580,8 @@ export default function Compare() {
 
       {/* ── Fare Range tab ────────────────────────────────────────────────── */}
       {tab === "range" && (
-        <div style={{ display:"grid",
-                      gridTemplateColumns:"1fr 1fr",
+                <div style={{ display:"grid",
+                      gridTemplateColumns:"repeat(auto-fit,minmax(min(320px,100%),1fr))",
                       gap:20 }}>
           {[
             { route:routeA, detail:detailA,

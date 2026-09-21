@@ -373,8 +373,9 @@ export default function RoutePage() {
       </GlassCard>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24,
-                    flexWrap: "wrap" }}>
+            <div style={{ display:"flex", gap:8, marginBottom:24,
+                    flexWrap:"wrap", overflowX:"auto",
+                    paddingBottom:4 }}>
         {[
           { key:"overview",  label:"Overview"       },
           { key:"calendar",  label:"Price Calendar" },
@@ -612,10 +613,11 @@ export default function RoutePage() {
       {/* ── Tab: All Carriers ─────────────────────────────────────────────── */}
       {tab === "carriers" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 16,
+                      <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(280px,100%), 1fr))",
+              gap: 16,
+            
           }}>
             {carriers
               .sort((a,b) => a.fare - b.fare)

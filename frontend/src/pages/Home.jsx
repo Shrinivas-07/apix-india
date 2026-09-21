@@ -207,7 +207,7 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
           position: "absolute", top: "100%", left: 0, right: 0,
           zIndex: 500, marginTop: 8,
           ...glass.strong, borderRadius: 14,
-          padding: 8, maxHeight: 280, overflowY: "auto",
+          padding: 8, maxHeight: 280, overflowY: "visible",
         }}>
           <input
             autoFocus
@@ -513,10 +513,10 @@ export default function Home() {
       </p>
 
       {/* ── KPI Cards ────────────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: 16, marginBottom: 32,
+        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+        gap: 12, marginBottom: 24,
       }}>
                 <StatCard
           label="National APIx"
@@ -657,6 +657,7 @@ export default function Home() {
               boxShadow: "0 4px 20px rgba(59,130,246,0.4)",
               transition: "all 0.15s",
               letterSpacing: "0.02em",
+              flex: "1 1 auto",
             }}
             onMouseEnter={e => e.target.style.transform = "scale(1.03)"}
             onMouseLeave={e => e.target.style.transform = "scale(1)"}>
@@ -666,11 +667,12 @@ export default function Home() {
       </GlassCard>
 
       {/* ── Charts Row ───────────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "1.6fr 1fr",
+        gridTemplateColumns: "clamp(1fr, 60%, 1.6fr) 1fr",
         gap: 20, marginBottom: 24,
-      }}>
+      }}
+      className="stack-mobile">
 
         {/* Price index trend */}
         <GlassCard>
@@ -869,10 +871,10 @@ export default function Home() {
       </GlassCard>
 
       {/* ── Index Stats Row ───────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-        gap: 16, marginBottom: 24,
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: 12, marginBottom: 20,
       }}>
         <GlassCard>
           <div style={{ fontSize: 13, fontWeight: 600,

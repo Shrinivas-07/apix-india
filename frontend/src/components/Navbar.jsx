@@ -23,7 +23,25 @@ export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState(null)
   const location = useLocation()
-  const { connected: wsOn } = useLiveData()
+  
+
+  useEffect(() => {
+    async function checkStatus() {
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL ?? 
+            "https://apix-india-api.onrender.com"}/api/live/status`
+        )
+        const data = await res.json()
+        setScrapeStatus(data)
+      } catch {
+        // Silent fail
+      }
+    }
+    checkStatus()
+    const timer = setInterval(checkStatus, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
 
   useEffect(() => {
     async function loadScrapeStatus() {
@@ -164,7 +182,7 @@ export default function Navbar({ apix }) {
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
-              display: "none", // shown via media query
+              
               background: "transparent", border: "none",
               color: colors.textPrimary, fontSize: 20,
               cursor: "pointer", padding: 8,
