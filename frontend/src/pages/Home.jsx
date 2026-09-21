@@ -467,7 +467,7 @@ export default function Home() {
       <div style={{ display: "flex", justifyContent: "center",
                     marginBottom: 16, gap: 10,
                     alignItems: "center", flexWrap: "wrap" }}>
-        <LiveBadge label="LIVE · Updates every 15 min" />
+        <LiveBadge label="AUTO · Target refresh every 15 min" />
         {wsConnected && (
           <div style={{
             fontSize: 11, color: colors.green,
