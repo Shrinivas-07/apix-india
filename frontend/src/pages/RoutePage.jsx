@@ -14,7 +14,6 @@ import FlightRow    from "../components/FlightRow"
 import BookingPanel from "../components/BookingPanel"
 import { fetchRouteDetail, fetchIndexHistory } from "../api"
 import { colors, glass } from "../styles/theme"
-import FareRangeChart from "../components/FareRangeChart"
 
 // ── Route config ──────────────────────────────────────────────────────────────
 const ROUTE_META = {
