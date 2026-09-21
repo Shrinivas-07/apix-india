@@ -14,7 +14,6 @@ import LiveBadge    from "../components/LiveBadge"
 import FlightRow    from "../components/FlightRow"
 import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
-import useLiveData  from "../hooks/useLiveData"
 import {
   fetchLatestIndex, fetchIndexHistory,
   fetchRoutes, fetchStats, fetchLiveFeed
@@ -332,7 +331,7 @@ export default function Home() {
   const { data: liveWs } = useLiveData()
 
     // ── Live WebSocket data ───────────────────────────────────────────────────
-  const { data: liveWs, connected: wsConnected,
+  const { connected: wsConnected,
           lastUpdate: wsLastUpdate } = useLiveData()
 
   // Data states
