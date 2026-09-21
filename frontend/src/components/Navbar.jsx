@@ -1,10 +1,7 @@
 // src/components/Navbar.jsx
-import { NavLink, useLocation } from "react-router-dom"
-import { useState } from "react"
-import { colors, glass, gradients } from "../styles/theme"
-import { useEffect } from "react"
-import { fetchHealth } from "../api"
-import useLiveData from "../hooks/useLiveData"
+import { NavLink } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { colors, glass } from "../styles/theme"
 
 const BACKEND_URL = "https://apix-india-api.onrender.com"
 
@@ -22,32 +19,16 @@ const links = [
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
   const [scrapeStatus, setScrapeStatus] = useState(null)
-  const location = useLocation()
-  
-
-  useEffect(() => {
-    async function checkStatus() {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL ?? 
-            "https://apix-india-api.onrender.com"}/api/live/status`
-        )
-        const data = await res.json()
-        setScrapeStatus(data)
-      } catch {
-        // Silent fail
-      }
-    }
-    checkStatus()
-    const timer = setInterval(checkStatus, 5 * 60 * 1000)
-    return () => clearInterval(timer)
-  }, [])
 
   useEffect(() => {
     async function loadScrapeStatus() {
       try {
-        const response = await fetch(`${BACKEND_URL}/api/live/status`)
-        if (response.ok) setScrapeStatus(await response.json())
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL ?? BACKEND_URL}/api/live/status`
+        )
+        if (response.ok) {
+          setScrapeStatus(await response.json())
+        }
       } catch {}
     }
 
@@ -55,6 +36,15 @@ export default function Navbar({ apix }) {
     const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
     return () => clearInterval(timer)
   }, [])
+
+  function formatScrapeStatus(status) {
+    if (status?.status === "fresh") return "LIVE"
+    if (status?.minutes_ago == null) return "OFFLINE"
+    if (status.minutes_ago >= 1440) {
+      return `STALE · ${Math.floor(status.minutes_ago / 1440)}d ago`
+      }
+    return `STALE · ${status.minutes_ago}m ago`
+    }
 
   return (
     <>
