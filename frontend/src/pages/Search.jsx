@@ -154,7 +154,12 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
   }, [])
 
   return (
-    <div ref={ref} style={{ position:"relative", flex:1, minWidth:180 }}>
+    <div ref={ref} style={{
+      position:"relative",
+      flex:"1 1 240px",
+      minWidth:0,
+      zIndex: open ? 20 : 1,
+    }}>
       <div
         onClick={() => { setOpen(true); setFocused(true) }}
         style={{
@@ -524,7 +529,13 @@ export default function Search() {
       </div>
 
       {/* ── Search form ──────────────────────────────────────────────────── */}
-      <GlassCard style={{ marginBottom:28, padding:24, overflow:"visible" }}>
+      <GlassCard style={{
+        marginBottom:28,
+        padding:24,
+        overflow:"visible",
+        position:"relative",
+        zIndex:10,
+      }}>
         <div style={{ display:"flex", gap:12,
                       alignItems:"flex-end", flexWrap:"wrap" }}>
 
