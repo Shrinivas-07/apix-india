@@ -114,22 +114,26 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
-        {scrapeStatus && (
+
+
+                  {scrapeStatus && (
             <div style={{
               fontSize:10, color: scrapeStatus.status === "fresh"
                 ? colors.green : colors.amber,
               display:"flex", alignItems:"center", gap:4,
             }}
-            title={`Last scrape: ${scrapeStatus.minutes_ago ?? "unknown"} min ago`}>
+            title={`Last scrape: ${scrapeStatus.minutes_ago} min ago`}>
               <span style={{
                 width:6, height:6, borderRadius:"50%",
                 background: scrapeStatus.status === "fresh"
                   ? colors.green : colors.amber,
                 display:"inline-block",
               }} />
-              {formatScrapeStatus(scrapeStatus)}
+              {scrapeStatus.minutes_ago
+                ? `${scrapeStatus.minutes_ago}m ago`
+                : "live"}
             </div>
-        )}
+          )}
 
 
         
