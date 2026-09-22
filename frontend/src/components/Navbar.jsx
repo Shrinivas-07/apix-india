@@ -38,13 +38,21 @@ export default function Navbar({ apix }) {
   }, [])
 
   function formatScrapeStatus(status) {
-    if (status?.status === "fresh") return "LIVE"
-    if (status?.minutes_ago == null) return "OFFLINE"
-    if (status.minutes_ago >= 1440) {
-      return `STALE · ${Math.floor(status.minutes_ago / 1440)}d ago`
-      }
-    return `STALE · ${status.minutes_ago}m ago`
-    }
+  if (status?.status === "fresh") return "LIVE"
+  if (status?.minutes_ago == null) return "OFFLINE"
+
+  const minutes = status.minutes_ago
+
+  if (minutes >= 1440) {
+    return `STALE · ${Math.floor(minutes / 1440)}d ago`
+  }
+
+  if (minutes >= 60) {
+    return `STALE · ${Math.floor(minutes / 60)}h ago`
+  }
+
+  return `STALE · ${minutes}m ago`
+}
 
   return (
     <>
@@ -116,24 +124,34 @@ export default function Navbar({ apix }) {
         {/* Live APIx pill */}
 
 
-                  {scrapeStatus && (
-            <div style={{
-              fontSize:10, color: scrapeStatus.status === "fresh"
-                ? colors.green : colors.amber,
-              display:"flex", alignItems:"center", gap:4,
-            }}
-            title={`Last scrape: ${scrapeStatus.minutes_ago} min ago`}>
-              <span style={{
-                width:6, height:6, borderRadius:"50%",
-                background: scrapeStatus.status === "fresh"
-                  ? colors.green : colors.amber,
-                display:"inline-block",
-              }} />
-              {scrapeStatus.minutes_ago
-                ? `${scrapeStatus.minutes_ago}m ago`
-                : "live"}
-            </div>
-          )}
+                 {scrapeStatus && (
+  <div
+    style={{
+      fontSize: 10,
+      color: scrapeStatus.status === "fresh"
+        ? colors.green
+        : colors.amber,
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+    }}
+    title={`Last scrape: ${scrapeStatus.minutes_ago ?? "unknown"} min ago`}
+  >
+    <span
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: "50%",
+        background: scrapeStatus.status === "fresh"
+          ? colors.green
+          : colors.amber,
+        display: "inline-block",
+      }}
+    />
+
+    {formatScrapeStatus(scrapeStatus)}
+  </div>
+)}
 
 
         
