@@ -84,8 +84,8 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div style={{
       ...glass.strong, padding: "12px 16px",
-      borderRadius: 12, minWidth: 160,
-    }}>
+        borderRadius: 12, minWidth: 160,
+      }}>
       <div style={{ fontSize: 11, color: colors.textMuted,
                     marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 700,
@@ -170,18 +170,33 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
   )
 
   return (
-    <div style={{ position: "relative", flex: 1 }}>
+    <div style={{
+      position: "relative",
+      flex: "1 1 220px",
+      minWidth: 0,
+      zIndex: open ? 20 : 1,
+    }}>
       <div
         onClick={() => setOpen(!open)}
         style={{
           ...glass.card, padding: "14px 18px",
           cursor: "pointer", display: "flex",
-          alignItems: "center", justifyContent: "space-between",
+          flexDirection: "column", alignItems: "stretch",
+          justifyContent: "center", position: "relative",
           borderRadius: 12,
           border: open
             ? `1px solid ${colors.blue}`
             : `1px solid ${colors.glassBorder}`,
         }}>
+        <div style={{
+          fontSize: 10,
+          color: colors.textMuted,
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+          marginBottom: 4,
+        }}>
+          {placeholder}
+        </div>
         {selected ? (
           <div>
             <div style={{ fontSize: 18, fontWeight: 800,
@@ -197,7 +212,14 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
             {placeholder}
           </div>
         )}
-        <span style={{ color: colors.textMuted, fontSize: 12 }}>
+        <span style={{
+          color: colors.textMuted,
+          fontSize: 12,
+          position: "absolute",
+          right: 18,
+          top: "50%",
+          transform: "translateY(-50%)",
+        }}>
           {open ? "▲" : "▼"}
         </span>
       </div>
@@ -205,9 +227,9 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
       {open && (
         <div style={{
           position: "absolute", top: "100%", left: 0, right: 0,
-          zIndex: 500, marginTop: 8,
+          zIndex: 1000, marginTop: 8,
           ...glass.strong, borderRadius: 14,
-          padding: 8, maxHeight: 280, overflowY: "visible",
+          padding: 8, maxHeight: 280, overflowY: "auto",
         }}>
           <input
             autoFocus
@@ -590,7 +612,13 @@ export default function Home() {
       </div>
 
       {/* ── Search Bar ───────────────────────────────────────────────────── */}
-      <GlassCard style={{ marginBottom: 32, padding: 24 }}>
+      <GlassCard style={{
+        marginBottom: 32,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+      }}>
         <div style={{ fontSize: 13, color: colors.textSecondary,
                       marginBottom: 14, fontWeight: 500 }}>
           🔍 Search flights
