@@ -161,13 +161,21 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
       zIndex: open ? 20 : 1,
     }}>
       <div
-        onClick={() => { setOpen(true); setFocused(true) }}
+        onClick={() => {
+          const nextOpen = !open
+          setOpen(nextOpen)
+          setFocused(nextOpen)
+        }}
         style={{
-          ...glass.card, padding:"14px 18px",
-          cursor:"pointer", borderRadius:14,
+          ...glass.card, padding:"14px 52px 14px 18px",
+          cursor:"pointer", borderRadius:14, position:"relative",
+          background: colors.bgTertiary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
           border: focused
             ? `1px solid ${colors.blue}`
-            : `1px solid ${colors.glassBorder}`,
+            : `1px solid ${colors.borderStrong}`,
           transition:"border-color 0.2s",
         }}>
         <div style={{ fontSize:10, color:colors.textMuted,
@@ -191,6 +199,14 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
             Select airport
           </div>
         )}
+        <span style={{
+          position: "absolute", right: 18, top: "50%",
+          transform: "translateY(-50%)",
+          color: focused ? colors.blue : colors.textSecondary,
+          fontSize: 12, fontWeight: 700,
+        }}>
+          {open ? "▲" : "▼"}
+        </span>
       </div>
 
       {open && (
@@ -198,6 +214,10 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
           position:"absolute", top:"calc(100% + 8px)",
           left:0, right:0, zIndex:9999,
           ...glass.strong, borderRadius:14, padding:8,
+          background: colors.bgSecondary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          border: `1px solid ${colors.borderStrong}`,
           maxHeight:300, overflowY:"auto",
           boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
         }}>
@@ -208,7 +228,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
             placeholder="Search city, airport or code..."
             style={{
               width:"100%", marginBottom:6,
-              background:"rgba(255,255,255,0.06)",
+              background:colors.bg,
               border:`1px solid ${colors.border}`,
               borderRadius:8, padding:"8px 12px",
               color:colors.textPrimary, fontSize:13,
