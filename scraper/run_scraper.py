@@ -8,6 +8,7 @@
 
 import asyncio
 import sys
+import os
 import time
 from datetime import datetime, timedelta
 
@@ -24,7 +25,8 @@ from scraper.sites.google_flights import scrape_google_flights
 
 # ── Config ────────────────────────────────────────────────────────────────────
 DELAY_BETWEEN_SEARCHES = 8   # seconds to wait between each search (be polite)
-HEADLESS = False              # True = invisible browser, False = visible (debug)
+IS_CI   = os.environ.get("CI", "false").lower() == "true"
+HEADLESS = True if IS_CI else False  # auto headless in GitHub Actions              # True = invisible browser, False = visible (debug)
 
 
 async def scrape_one_window(origin, destination, advance_days):
