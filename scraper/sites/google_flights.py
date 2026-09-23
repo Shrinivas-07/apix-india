@@ -5,6 +5,7 @@
 import asyncio
 import json
 import re
+import os
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
 
@@ -40,10 +41,20 @@ async def scrape_google_flights(origin: str, destination: str, travel_date: str)
     print(f"\n[GoogleFlights] Searching {origin} → {destination} on {travel_date}")
 
     async with async_playwright() as p:
+                # Auto-detect if running in CI/GitHub Actions
+        is_ci = os.environ.get("CI", "false").lower() == "true"
+
         browser = await p.chromium.launch(
-            headless=False,
-            slow_mo=80,
-            args=["--disable-blink-features=AutomationControlled"]
+            headless=True if is_ci else False,
+            slow_mo=0 if is_ci else 80,
+            args=[
+                "--disable-blink-features=AutomationControlled",
+                "--no-sandbox",
+                "--disable-setuid-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--window-size=1280,800",
+            ]
         )
         context = await browser.new_context(
             user_agent=(
