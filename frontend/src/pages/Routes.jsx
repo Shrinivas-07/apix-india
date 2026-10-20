@@ -186,6 +186,24 @@ function RouteCard({ route, liveData, onClick }) {
         fontSize: 18, color: colors.textMuted,
         transition: "transform 0.15s, color 0.15s",
       }}>→</div>
+
+      <div style={{ marginTop: 10, paddingTop: 10,
+                    borderTop: `1px solid ${colors.border}`,
+                    display: "flex", gap: 8 }}>
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            window.location.href = `/compare?a=${route.route}`
+          }}
+          style={{
+            fontSize: 11, padding: "4px 10px",
+            borderRadius: 6, border: `1px solid ${colors.border}`,
+            background: "transparent",
+            color: colors.textMuted, cursor: "pointer",
+          }}>
+          ⚖ Compare
+        </button>
+      </div>
     </div>
   )
 }
@@ -263,10 +281,10 @@ export default function RoutesPage() {
       </div>
 
       {/* ── Summary cards ────────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))",
-        gap: 14, marginBottom: 28,
+        gridTemplateColumns: "repeat(auto-fit, minmax(130px,1fr))",
+        gap: 10, marginBottom: 20,
       }}>
         {[
           { label:"Avg fare",    value:`₹${avgFare.toLocaleString("en-IN")}`,
@@ -323,6 +341,7 @@ export default function RoutesPage() {
                 borderRadius: 10, padding: "10px 14px 10px 36px",
                 color: colors.textPrimary, fontSize: 13,
                 outline: "none",
+                width: "100%",
               }} />
           </div>
 
@@ -387,10 +406,10 @@ export default function RoutesPage() {
 
       {/* ── Route grid ───────────────────────────────────────────────────── */}
       {loading ? (
-        <div style={{
+                <div style={{
           display: "grid",
-          gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-          gap: 16
+          gridTemplateColumns: "repeat(auto-fill, minmax(min(280px, 100%), 1fr))",
+          gap: 16,
         }}>
           {[...Array(8)].map((_, i) => (
             <Skeleton key={i} h={200} radius={16} />
@@ -432,9 +451,26 @@ export default function RoutesPage() {
               onClick={() => navigate(`/route/${route.route}`)}
             />
           ))}
+                {/* Compare link */}
+      <div style={{ marginTop:10, paddingTop:10,
+                    borderTop:`1px solid ${colors.border}`,
+                    display:"flex", gap:8 }}>
+        <button
+          onClick={e => {
+            e.stopPropagation()
+            window.location.href = `/compare?a=${route.route}`
+          }}
+          style={{
+            fontSize:11, padding:"4px 10px",
+            borderRadius:6, border:`1px solid ${colors.border}`,
+            background:"transparent",
+            color:colors.textMuted, cursor:"pointer",
+          }}>
+          ⚖ Compare
+        </button>
+      </div>
         </div>
       )}
-
       {/* ── Footer note ──────────────────────────────────────────────────── */}
       <div style={{
         marginTop: 40, textAlign: "center",

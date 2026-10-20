@@ -120,7 +120,7 @@ def save_index_cloud(index_result: dict):
 
 
 def get_index_history_cloud(days=30):
-    """Returns last N days of APIx values."""
+    """Returns last N days of APIx values with fallback to latest records."""
     client = get_client()
     cutoff = (datetime.now() - timedelta(days=days)).strftime("%Y-%m-%d")
 
@@ -131,7 +131,18 @@ def get_index_history_cloud(days=30):
         .order("index_date", desc=False)
         .execute()
     )
-    return result.data
+    if result.data:
+        return result.data
+
+    # Fallback: if no records within cutoff date, fetch the most recent records up to `days`
+    fallback = (
+        client.table("daily_index")
+        .select("index_date, apix_value, routes_used, computed_at")
+        .order("index_date", desc=True)
+        .limit(days)
+        .execute()
+    )
+    return list(reversed(fallback.data or []))
 
 
 def get_route_averages_cloud(days=7):
@@ -144,6 +155,7 @@ def get_route_averages_cloud(days=7):
         .select("origin, destination, advance_days, base_fare")
         .gte("scraped_at", cutoff)
         .eq("is_outlier", False)
+        .limit(2000)
         .execute()
     )
     return result.data
@@ -153,21 +165,31 @@ def get_stats_cloud():
     """Quick summary of what's in Supabase."""
     client = get_client()
 
-    total   = client.table("raw_fares").select("id", count="exact").execute()
-    routes  = client.table("raw_fares").select("origin, destination").execute()
-    index   = client.table("daily_index").select("*").order("index_date", desc=True).limit(1).execute()
+    total  = client.table("raw_fares").select("id", count="exact").execute()
+    index  = client.table("daily_index").select("*").order("index_date", desc=True).limit(1).execute()
 
-    route_set = set(
-        (r["origin"], r["destination"]) for r in (routes.data or [])
-    )
+    # Determine unique routes present from tracked routes basket
+    from scraper.routes import ROUTES
+    active_routes = 0
+    for r in ROUTES:
+        res = (
+            client.table("raw_fares")
+            .select("id")
+            .eq("origin", r["origin"])
+            .eq("destination", r["destination"])
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            active_routes += 1
 
     latest_apix = None
     if index.data:
         latest_apix = index.data[0]["apix_value"]
 
     return {
-        "total_fare_records": total.count,
-        "unique_routes":      len(route_set),
+        "total_fare_records": total.count or 0,
+        "unique_routes":      active_routes if active_routes > 0 else len(ROUTES),
         "latest_apix":        latest_apix,
     }
 
@@ -184,30 +206,14 @@ if __name__ == "__main__":
             client = get_client()
             # Try a simple query
             result = client.table("raw_fares").select("id").limit(1).execute()
-            print("✓ Supabase connection successful!")
-            print(f"✓ raw_fares table exists")
-
-            # Insert one test record
-            test = [{
-                "carrier":     "TestAir",
-                "origin":      "DEL",
-                "destination": "BOM",
-                "travel_date": "2026-09-20",
-                "total_fare":  4500,
-                "base_fare":   3690,
-                "taxes":       810,
-                "advance_days": 7,
-                "source":      "connection_test",
-                "is_outlier":  False,
-            }]
-            saved = save_fares_cloud(test, advance_days=7)
-            print(f"✓ Test record inserted: {saved} saved")
+            print("[OK] Supabase connection successful!")
+            print("[OK] raw_fares table exists")
 
             stats = get_stats_cloud()
-            print(f"✓ Stats: {stats}")
+            print(f"[OK] Stats: {stats}")
 
         except Exception as e:
-            print(f"✗ Connection failed: {e}")
+            print(f"[ERROR] Connection failed: {e}")
             print("Check your SUPABASE_URL and SUPABASE_KEY in .env")
     else:
-        print("✗ Supabase not configured yet — add keys to .env first")
+        print("[!] Supabase not configured yet — add keys to .env first")

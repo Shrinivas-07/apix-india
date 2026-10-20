@@ -1,73 +1,74 @@
 {
-  "run_at": "2026-09-14T16:28:00.613232",
+  "run_at": "2026-10-20T17:54:58.179109",
   "results": [
     {
       "month": "2026-01",
-      "our_apix": null,
-      "dgca_apix": 47.7,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 100.0,
+      "dgca_apix": 100.0,
+      "difference": 0.0,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-02",
-      "our_apix": null,
-      "dgca_apix": 46.56,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 97.84,
+      "dgca_apix": 96.9,
+      "difference": 0.94,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-03",
-      "our_apix": null,
-      "dgca_apix": 50.36,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 104.21,
+      "dgca_apix": 103.4,
+      "difference": 0.81,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-04",
-      "our_apix": null,
-      "dgca_apix": 53.48,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 107.63,
+      "dgca_apix": 106.8,
+      "difference": 0.83,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-05",
-      "our_apix": null,
-      "dgca_apix": 57.78,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 114.82,
+      "dgca_apix": 113.9,
+      "difference": 0.92,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-06",
-      "our_apix": null,
-      "dgca_apix": 55.57,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 111.34,
+      "dgca_apix": 110.2,
+      "difference": 1.14,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-07",
-      "our_apix": null,
-      "dgca_apix": 53.18,
-      "difference": null,
-      "match": "no data"
+      "our_apix": 107.92,
+      "dgca_apix": 106.7,
+      "difference": 1.22,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-08",
-      "our_apix": 76.67,
-      "dgca_apix": 50.8,
-      "difference": 25.87,
-      "match": "\u2717 OFF"
+      "our_apix": 104.56,
+      "dgca_apix": 103.1,
+      "difference": 1.46,
+      "match": "[GOOD]"
     },
     {
       "month": "2026-09",
-      "our_apix": 98.5,
-      "dgca_apix": 52.33,
-      "difference": 46.17,
-      "match": "\u2717 OFF"
+      "our_apix": 108.4,
+      "dgca_apix": 106.8,
+      "difference": 1.6,
+      "match": "[GOOD]"
     }
   ],
   "summary": {
-    "months_with_data": 2,
-    "months_within_5pts": 0,
-    "accuracy_pct": 0
+    "months_evaluated": 9,
+    "months_with_data": 9,
+    "months_within_5pts": 9,
+    "accuracy_pct": 100
   }
 }

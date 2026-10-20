@@ -26,39 +26,40 @@ from scraper.sites.google_flights import scrape_google_flights
 # ── Config ────────────────────────────────────────────────────────────────────
 DELAY_BETWEEN_SEARCHES = 8   # seconds to wait between each search (be polite)
 IS_CI   = os.environ.get("CI", "false").lower() == "true"
-HEADLESS = True if IS_CI else False  # auto headless in GitHub Actions              # True = invisible browser, False = visible (debug)
+HEADLESS = True if IS_CI else False  # auto headless in GitHub Actions
 
 
 async def scrape_one_window(origin, destination, advance_days):
     """
     Scrapes one route for one advance window.
-    Saves to Supabase if configured, otherwise local SQLite.
+    Saves to both local SQLite and Supabase (if configured).
     """
     travel_date = (datetime.now() + timedelta(days=advance_days)).strftime("%Y-%m-%d")
 
-    print(f"\n{'─'*55}")
-    print(f"  Route : {origin} → {destination}")
+    print(f"\n{'-'*55}")
+    print(f"  Route : {origin} -> {destination}")
     print(f"  Window: T+{advance_days} days  (travel on {travel_date})")
-    print(f"{'─'*55}")
+    print(f"{'-'*55}")
 
     try:
         raw_fares = await scrape_google_flights(origin, destination, travel_date)
         cleaned   = clean_fares(raw_fares, origin, destination)
 
-        # Try Supabase first, fall back to local SQLite
+        # 1. Always save locally so local SQLite is fully up-to-date
+        local_saved = save_fares(cleaned, advance_days=advance_days)
+
+        # 2. Also save to Supabase if configured
+        cloud_saved = 0
         try:
             from backend.database import save_fares_cloud, USE_SUPABASE
             if USE_SUPABASE:
-                saved = save_fares_cloud(cleaned, advance_days=advance_days)
-            else:
-                saved = save_fares(cleaned, advance_days=advance_days)
+                cloud_saved = save_fares_cloud(cleaned, advance_days=advance_days)
         except Exception as e:
-            print(f"  [Supabase] Failed, using local: {e}")
-            saved = save_fares(cleaned, advance_days=advance_days)
+            print(f"  [Supabase] Cloud save skipped/failed: {e}")
 
-        return saved
+        return cloud_saved if cloud_saved > 0 else local_saved
     except Exception as e:
-        print(f"  [ERROR] {origin}→{destination} T+{advance_days}: {e}")
+        print(f"  [ERROR] {origin}->{destination} T+{advance_days}: {e}")
         return 0
 
 
@@ -83,7 +84,7 @@ async def run_all(target_origin=None, target_dest=None):
             and r["destination"] == target_dest.upper()
         ]
         if not routes_to_run:
-            print(f"Route {target_origin}→{target_dest} not found in routes.py")
+            print(f"Route {target_origin}->{target_dest} not found in routes.py")
             return
 
     print("\n" + "=" * 55)
@@ -99,9 +100,9 @@ async def run_all(target_origin=None, target_dest=None):
         name   = route["name"]
         weight = route["weight"]
 
-        print(f"\n\n{'═'*55}")
+        print(f"\n\n{'='*55}")
         print(f"  ROUTE: {name}  (weight: {weight}%)")
-        print(f"{'═'*55}")
+        print(f"{'='*55}")
 
         for advance_days in ADVANCE_WINDOWS:
             saved = await scrape_one_window(origin, dest, advance_days)
@@ -109,7 +110,7 @@ async def run_all(target_origin=None, target_dest=None):
             total_searches += 1
 
             if saved == 0:
-                failed.append(f"{origin}→{dest} T+{advance_days}")
+                failed.append(f"{origin}->{dest} T+{advance_days}")
 
             # Polite delay between searches so we don't get blocked
             if advance_days != ADVANCE_WINDOWS[-1]:
@@ -152,8 +153,8 @@ if __name__ == "__main__":
     if len(sys.argv) == 3:
         orig = sys.argv[1]
         dest = sys.argv[2]
-        print(f"Single route mode: {orig} → {dest}")
+        print(f"Single route mode: {orig} -> {dest}")
         asyncio.run(run_all(orig, dest))
     else:
-        print("Full run mode: all routes × all windows")
+        print("Full run mode: all routes x all windows")
         asyncio.run(run_all())

@@ -1,11 +1,13 @@
 // src/pages/Home.jsx
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, ReferenceLine,
   Area, AreaChart, ComposedChart, Bar
 } from "recharts"
+import useLiveData      from "../hooks/useLiveData"
+import AnimatedNumber   from "../components/AnimatedNumber"
 import GlassCard    from "../components/GlassCard"
 import StatCard     from "../components/StatCard"
 import LiveBadge    from "../components/LiveBadge"
@@ -14,27 +16,36 @@ import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
 import {
   fetchLatestIndex, fetchIndexHistory,
-  fetchRoutes, fetchStats
+  fetchRoutes, fetchStats, fetchLiveFeed,
+  DEFAULT_ROUTES, DEFAULT_HISTORY
 } from "../api"
+const BACKEND_URL = "https://apix-india-api.onrender.com"
 import { colors, glass, gradients, text, spacing, radius } from "../styles/theme"
+
+     
 
 // ── Airport data for search ───────────────────────────────────────────────────
 const AIRPORTS = [
-  { code:"DEL", name:"Indira Gandhi Intl", city:"Delhi" },
-  { code:"BOM", name:"Chhatrapati Shivaji Intl", city:"Mumbai" },
-  { code:"BLR", name:"Kempegowda Intl", city:"Bengaluru" },
-  { code:"CCU", name:"Netaji Subhas Chandra Bose Intl", city:"Kolkata" },
-  { code:"MAA", name:"Chennai Intl", city:"Chennai" },
-  { code:"HYD", name:"Rajiv Gandhi Intl", city:"Hyderabad" },
-  { code:"GOI", name:"Goa Intl", city:"Goa" },
-  { code:"AMD", name:"Sardar Vallabhbhai Patel Intl", city:"Ahmedabad" },
-  { code:"PNQ", name:"Pune Intl", city:"Pune" },
-  { code:"JAI", name:"Jaipur Intl", city:"Jaipur" },
-  { code:"COK", name:"Cochin Intl", city:"Kochi" },
-  { code:"ATQ", name:"Sri Guru Ram Dass Jee Intl", city:"Amritsar" },
-  { code:"LKO", name:"Chaudhary Charan Singh Intl", city:"Lucknow" },
-  { code:"BBI", name:"Biju Patnaik Intl", city:"Bhubaneswar" },
-  { code:"GAU", name:"Lokpriya Gopinath Bordoloi Intl", city:"Guwahati" },
+  { code:"DEL", name:"Indira Gandhi International", city:"Delhi",       state:"Delhi"         },
+  { code:"BOM", name:"Chhatrapati Shivaji International", city:"Mumbai", state:"Maharashtra"  },
+  { code:"BLR", name:"Kempegowda International",    city:"Bengaluru",  state:"Karnataka"     },
+  { code:"CCU", name:"Netaji Subhas Chandra Bose",  city:"Kolkata",    state:"West Bengal"   },
+  { code:"MAA", name:"Chennai International",        city:"Chennai",    state:"Tamil Nadu"    },
+  { code:"HYD", name:"Rajiv Gandhi International",  city:"Hyderabad",  state:"Telangana"     },
+  { code:"GOI", name:"Goa International (Dabolim)", city:"Goa",        state:"Goa"           },
+  { code:"AMD", name:"Sardar Vallabhbhai Patel",    city:"Ahmedabad",  state:"Gujarat"       },
+  { code:"PNQ", name:"Pune International",           city:"Pune",       state:"Maharashtra"   },
+  { code:"JAI", name:"Jaipur International",         city:"Jaipur",     state:"Rajasthan"     },
+  { code:"COK", name:"Cochin International",         city:"Kochi",      state:"Kerala"        },
+  { code:"ATQ", name:"Sri Guru Ram Dass Jee Intl",  city:"Amritsar",   state:"Punjab"        },
+  { code:"LKO", name:"Chaudhary Charan Singh Intl", city:"Lucknow",    state:"Uttar Pradesh" },
+  { code:"BBI", name:"Biju Patnaik International",  city:"Bhubaneswar",state:"Odisha"        },
+  { code:"GAU", name:"Lokpriya Gopinath Bordoloi",  city:"Guwahati",   state:"Assam"         },
+  { code:"IXC", name:"Chandigarh International",    city:"Chandigarh", state:"Chandigarh"    },
+  { code:"VNS", name:"Lal Bahadur Shastri Intl",   city:"Varanasi",   state:"Uttar Pradesh" },
+  { code:"PAT", name:"Jay Prakash Narayan Intl",    city:"Patna",      state:"Bihar"         },
+  { code:"IXR", name:"Birsa Munda Airport",         city:"Ranchi",     state:"Jharkhand"     },
+  { code:"SXR", name:"Sheikh ul-Alam International",city:"Srinagar",   state:"J&K"           },
 ]
 
 // ── Mock flight data per route ────────────────────────────────────────────────
@@ -79,8 +90,8 @@ function ChartTooltip({ active, payload, label }) {
   return (
     <div style={{
       ...glass.strong, padding: "12px 16px",
-      borderRadius: 12, minWidth: 160,
-    }}>
+        borderRadius: 12, minWidth: 160,
+      }}>
       <div style={{ fontSize: 11, color: colors.textMuted,
                     marginBottom: 6 }}>{label}</div>
       <div style={{ fontSize: 20, fontWeight: 700,
@@ -156,92 +167,232 @@ function LiveFeedItem({ item }) {
 function AirportSelect({ value, onChange, placeholder, exclude }) {
   const [open,   setOpen]   = useState(false)
   const [query,  setQuery]  = useState("")
+  const ref = useRef(null)
   const selected = AIRPORTS.find(a => a.code === value)
   const filtered = AIRPORTS.filter(a =>
     a.code !== exclude &&
     (a.code.toLowerCase().includes(query.toLowerCase()) ||
      a.city.toLowerCase().includes(query.toLowerCase()) ||
-     a.name.toLowerCase().includes(query.toLowerCase()))
-  )
+     a.name.toLowerCase().includes(query.toLowerCase()) ||
+     (a.state && a.state.toLowerCase().includes(query.toLowerCase())))
+  ).slice(0, 8)
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   return (
-    <div style={{ position: "relative", flex: 1 }}>
+    <div ref={ref} style={{
+      position: "relative",
+      flex: "1 1 220px",
+      minWidth: 0,
+      zIndex: open ? 50 : 1,
+    }}>
       <div
         onClick={() => setOpen(!open)}
         style={{
-          ...glass.card, padding: "14px 18px",
+          padding: "14px 52px 14px 18px",
           cursor: "pointer", display: "flex",
-          alignItems: "center", justifyContent: "space-between",
+          flexDirection: "column", alignItems: "stretch",
+          justifyContent: "center", position: "relative",
           borderRadius: 12,
+          background: "#111d35",
+          boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
           border: open
             ? `1px solid ${colors.blue}`
-            : `1px solid ${colors.glassBorder}`,
+            : "1px solid rgba(255, 255, 255, 0.1)",
+          transition: "border-color 0.2s",
         }}>
+        <div style={{
+          fontSize: 10,
+          color: colors.textMuted,
+          textTransform: "uppercase",
+          letterSpacing: "0.07em",
+          marginBottom: 4,
+        }}>
+          {placeholder}
+        </div>
         {selected ? (
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800,
-                          color: colors.textPrimary }}>
+            <div style={{ fontSize: 22, fontWeight: 800,
+                          color: colors.textPrimary,
+                          letterSpacing: "-0.5px" }}>
               {selected.code}
             </div>
-            <div style={{ fontSize: 11, color: colors.textSecondary }}>
-              {selected.city}
+            <div style={{ fontSize: 12, color: colors.textSecondary }}>
+              {selected.city} · {selected.name}
             </div>
           </div>
         ) : (
-          <div style={{ fontSize: 14, color: colors.textMuted }}>
+          <div style={{ fontSize: 16, color: colors.textMuted }}>
             {placeholder}
           </div>
         )}
-        <span style={{ color: colors.textMuted, fontSize: 12 }}>
+        <span style={{
+          color: open ? colors.blue : colors.textSecondary,
+          fontSize: 12,
+          fontWeight: 700,
+          position: "absolute",
+          right: 18,
+          top: "50%",
+          transform: "translateY(-50%)",
+        }}>
           {open ? "▲" : "▼"}
         </span>
       </div>
 
       {open && (
         <div style={{
-          position: "absolute", top: "100%", left: 0, right: 0,
-          zIndex: 500, marginTop: 8,
-          ...glass.strong, borderRadius: 14,
-          padding: 8, maxHeight: 280, overflowY: "auto",
+          position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0,
+          zIndex: 9999,
+          background: "#0d1528",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          boxShadow: "0 20px 48px rgba(0, 0, 0, 0.6)",
+          borderRadius: 14,
+          padding: 8, maxHeight: 300, overflowY: "auto",
         }}>
           <input
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search city or code..."
+            placeholder="Search city, airport or code..."
             style={{
-              width: "100%", background: "rgba(255,255,255,0.06)",
-              border: `1px solid ${colors.border}`,
+              width: "100%", background: "#070d1a",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
               borderRadius: 8, padding: "8px 12px",
               color: colors.textPrimary, fontSize: 13,
               outline: "none", marginBottom: 6,
+              boxSizing: "border-box",
             }} />
-          {filtered.map(a => (
-            <div key={a.code}
-              onClick={() => { onChange(a.code); setOpen(false); setQuery("") }}
-              style={{
-                padding: "10px 12px", borderRadius: 8,
-                cursor: "pointer", transition: "background 0.12s",
-                display: "flex", alignItems: "center",
-                justifyContent: "space-between",
-              }}
-              onMouseEnter={e =>
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
-              onMouseLeave={e =>
-                e.currentTarget.style.background = "transparent"}>
-              <div>
-                <span style={{ fontSize: 14, fontWeight: 700,
-                               color: colors.textPrimary }}>{a.code}</span>
-                <span style={{ fontSize: 12, color: colors.textSecondary,
-                               marginLeft: 8 }}>{a.city}</span>
-              </div>
-              <div style={{ fontSize: 11, color: colors.textMuted }}>
-                {a.name.slice(0, 20)}...
-              </div>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "12px", color: colors.textMuted,
+                          fontSize: 13, textAlign: "center" }}>
+              No airports found
             </div>
-          ))}
+          ) : (
+            filtered.map(a => (
+              <div key={a.code}
+                onMouseDown={e => {
+                  e.preventDefault()
+                  onChange(a.code)
+                  setOpen(false)
+                  setQuery("")
+                }}
+                onClick={() => { onChange(a.code); setOpen(false); setQuery("") }}
+                style={{
+                  padding: "12px 14px", borderRadius: 10,
+                  cursor: "pointer", transition: "background 0.12s",
+                  display: "flex", alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+                onMouseEnter={e =>
+                  e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
+                onMouseLeave={e =>
+                  e.currentTarget.style.background = "transparent"}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: "rgba(59,130,246,0.12)",
+                    border: "1px solid rgba(59,130,246,0.2)",
+                    display: "flex", alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13, fontWeight: 800, color: colors.blue,
+                    fontFamily: "monospace",
+                  }}>
+                    {a.code}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600,
+                                   color: colors.textPrimary }}>
+                      {a.city}
+                    </div>
+                    <div style={{ fontSize: 11, color: colors.textSecondary }}>
+                      {a.name}
+                    </div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: colors.textMuted }}>
+                  {a.state}
+                </div>
+              </div>
+            ))
+          )}
         </div>
       )}
+    </div>
+  )
+}
+
+function LiveStatusCard() {
+  const [status, setStatus] = useState(null)
+
+  useEffect(() => {
+    async function load() {
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/live/status`)
+        const data = await res.json()
+        setStatus(data)
+      } catch {
+        // ignore transient status fetch failures
+      }
+    }
+
+    load()
+    const timer = setInterval(load, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  if (!status) return null
+
+  const isLive = status.status === "fresh"
+  const color = isLive ? colors.green : colors.amber
+  const bgColor = isLive ? "rgba(16,185,129,0.08)" : "rgba(245,158,11,0.08)"
+  const bdColor = isLive ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"
+
+  return (
+    <div style={{
+      background: bgColor, border: `1px solid ${bdColor}`,
+      borderRadius: 12, padding: "14px 20px",
+      display: "flex", alignItems: "center",
+      justifyContent: "space-between",
+      flexWrap: "wrap", gap: 12, marginBottom: 24,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color }}>
+            {isLive ? "Data is fresh" : "Data may be stale"}
+          </div>
+          <div style={{ fontSize: 11, color: colors.textSecondary }}>
+            Last scrape: {status.minutes_ago ?? "—"} min ago ·
+            Route: {status.last_route ?? "—"}
+          </div>
+        </div>
+      </div>
+      <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+        {[
+          { label: "Scraper", value: status.live_scraper_enabled ? "Running" : "Scheduled" },
+          { label: "Interval", value: `${status.interval_minutes} min` },
+          { label: "Status", value: status.status },
+        ].map(item => (
+          <div key={item.label} style={{ textAlign: "center" }}>
+            <div style={{ fontSize: 10, color: colors.textMuted,
+                          textTransform: "uppercase",
+                          letterSpacing: "0.06em" }}>
+              {item.label}
+            </div>
+            <div style={{ fontSize: 13, fontWeight: 600,
+                          color: colors.textPrimary, marginTop: 2 }}>
+              {item.value}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -249,6 +400,11 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
 // ── Main Home component ───────────────────────────────────────────────────────
 export default function Home() {
   const navigate = useNavigate()
+  const { data: liveWs } = useLiveData()
+
+    // ── Live WebSocket data ───────────────────────────────────────────────────
+  const { connected: wsConnected,
+          lastUpdate: wsLastUpdate } = useLiveData()
 
   // Data states
   const [loading,  setLoading]  = useState(true)
@@ -275,16 +431,21 @@ export default function Home() {
   useEffect(() => {
     async function load() {
       try {
-        const [l, h, r, s] = await Promise.all([
+        const [lRes, hRes, rRes, sRes] = await Promise.allSettled([
           fetchLatestIndex(),
           fetchIndexHistory(60),
           fetchRoutes(),
           fetchStats(),
         ])
-        setLatest(l)
-        setHistory(h.history || [])
-        setRoutes(r.routes  || [])
-        setStats(s.stats    || {})
+        const l = lRes.status === "fulfilled" && lRes.value ? lRes.value : null
+        const h = hRes.status === "fulfilled" && hRes.value ? hRes.value : null
+        const r = rRes.status === "fulfilled" && rRes.value ? rRes.value : null
+        const s = sRes.status === "fulfilled" && sRes.value ? sRes.value : null
+
+        setLatest(l || { apix_value: 99.35, index_date: "2026-09-16" })
+        setHistory(h?.history?.length ? h.history : DEFAULT_HISTORY)
+        setRoutes(r?.routes?.length ? r.routes : DEFAULT_ROUTES)
+        setStats(s?.stats || { total_fare_records: 8181, unique_routes: 8, latest_apix: 99.35 })
       } catch (e) {
         console.error(e)
       } finally {
@@ -293,6 +454,32 @@ export default function Home() {
     }
     load()
   }, [])
+
+    // Merge WebSocket feed with REST feed
+  useEffect(() => {
+    if (!liveWs?.recent_fares?.length) return
+
+    const wsFeed = liveWs.recent_fares.slice(0, 6).map((r, i) => {
+      const prev   = liveWs.recent_fares[i+1]?.base_fare ?? r.base_fare
+      const change = prev
+        ? +((r.base_fare - prev) / prev * 100).toFixed(1) : 0
+      const mins   = Math.round(
+        (Date.now() - new Date(r.scraped_at)) / 60000
+      )
+      return {
+        route:   `${r.origin}-${r.destination}`,
+        carrier: r.carrier ?? "—",
+        from:    prev,
+        to:      r.base_fare,
+        change,
+        time:    mins < 1 ? "just now"
+               : mins < 60 ? `${mins} min ago`
+               : `${Math.floor(mins/60)}h ago`,
+      }
+    })
+
+    if (wsFeed.length > 0) setFeed(wsFeed)
+  }, [liveWs])
 
   // ── Generate live feed ────────────────────────────────────────────────────
   useEffect(() => {
@@ -321,6 +508,7 @@ export default function Home() {
 
   // ── Derived values ────────────────────────────────────────────────────────
   const apix       = latest?.apix_value ?? 100
+  const liveApix   = liveWs?.apix ?? apix
   const apixDelta  = +(apix - 100).toFixed(1)
   const isUp       = apixDelta > 0
 
@@ -359,43 +547,72 @@ export default function Home() {
                   padding: "40px 20px 80px" }}>
 
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <div style={{ textAlign: "center", marginBottom: 48 }}>
-        <div style={{ display: "flex", justifyContent: "center",
-                      marginBottom: 16 }}>
-          <LiveBadge label="LIVE · Updates every 15 min" />
-        </div>
-
-        <h1 style={{
-          fontSize: "clamp(32px, 6vw, 64px)",
-          fontWeight: 900, letterSpacing: "-2px",
-          lineHeight: 1.05, marginBottom: 16,
-          background: "linear-gradient(135deg, #f0f4ff 30%, #60a5fa 70%, #a78bfa)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}>
-          India's Real-time<br />Airfare Price Index
-        </h1>
-
-        <p style={{
-          fontSize: 16, color: colors.textSecondary,
-          maxWidth: 520, margin: "0 auto",
-          lineHeight: 1.7,
-        }}>
-          Automated daily tracking of domestic airfares across major
-          Indian routes. Built for MoSPI · NSO · RBI.
-        </p>
+      <div style={{ display: "flex", justifyContent: "center",
+                    marginBottom: 16, gap: 10,
+                    alignItems: "center", flexWrap: "wrap" }}>
+        <LiveBadge label="AUTO · Target refresh every 15 min" />
+        {wsConnected && (
+          <div style={{
+            fontSize: 11, color: colors.green,
+            display: "flex", alignItems: "center", gap: 4,
+            background: "rgba(16,185,129,0.08)",
+            border: "1px solid rgba(16,185,129,0.2)",
+            padding: "3px 10px", borderRadius: 99,
+          }}>
+            <span style={{
+              width: 6, height: 6, borderRadius: "50%",
+              background: colors.green,
+              display: "inline-block",
+              animation: "pulse-dot 1.5s infinite",
+            }} />
+            WebSocket connected
+          </div>
+        )}
+        {wsLastUpdate && (
+          <div style={{ fontSize: 11, color: colors.textMuted }}>
+            Updated {wsLastUpdate.toLocaleTimeString("en-IN")}
+          </div>
+        )}
       </div>
 
-      {/* ── KPI Cards ────────────────────────────────────────────────────── */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-        gap: 16, marginBottom: 32,
+      <h1 style={{
+        fontSize: "clamp(32px, 6vw, 64px)",
+        fontWeight: 900, letterSpacing: "-2px",
+        lineHeight: 1.05, marginBottom: 16,
+        background: "linear-gradient(135deg, #f0f4ff 30%, #60a5fa 70%, #a78bfa)",
+        WebkitBackgroundClip: "text",
+        WebkitTextFillColor: "transparent",
       }}>
-        <StatCard
+        India's Real-time<br />Airfare Price Index
+      </h1>
+
+      <p style={{
+        fontSize: 16, color: colors.textSecondary,
+        maxWidth: 520, margin: "0 auto",
+        lineHeight: 1.7,
+      }}>
+        Automated daily tracking of domestic airfares across major
+        Indian routes. Built for MoSPI · NSO · RBI.
+      </p>
+
+      {/* ── KPI Cards ────────────────────────────────────────────────────── */}
+            <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))",
+        gap: 12, marginBottom: 24,
+      }}>
+                <StatCard
           label="National APIx"
           icon="📊"
-          value={loading ? "—" : apix.toFixed(1)}
+          value={loading ? "—" : (
+            <AnimatedNumber
+              value={liveApix ?? 100}
+              decimals={1}
+              style={{ fontSize:32, fontWeight:800,
+                       letterSpacing:"-1px" }}
+            />
+          )}
+          
           sub={loading ? null
             : `${isUp ? "▲" : "▼"} ${Math.abs(apixDelta)} pts vs base period`}
           subUp={isUp}
@@ -456,7 +673,17 @@ export default function Home() {
       </div>
 
       {/* ── Search Bar ───────────────────────────────────────────────────── */}
-      <GlassCard style={{ marginBottom: 32, padding: 24 }}>
+      <div style={{
+        marginBottom: 32,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
+      }}>
         <div style={{ fontSize: 13, color: colors.textSecondary,
                       marginBottom: 14, fontWeight: 500 }}>
           🔍 Search flights
@@ -478,14 +705,18 @@ export default function Home() {
               setSearchTo(tmp)
             }}
             style={{
-              background: glass.card.background,
-              border: `1px solid ${colors.glassBorder}`,
-              borderRadius: 10, color: colors.textPrimary,
-              width: 44, height: 44, cursor: "pointer",
+              background: "#111d35",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 12, color: colors.textPrimary,
+              width: 48, height: 48, cursor: "pointer",
               fontSize: 18, flexShrink: 0,
               display: "flex", alignItems: "center",
               justifyContent: "center",
-            }}>
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "rotate(180deg)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "rotate(0deg)"}>
             ⇄
           </button>
 
@@ -497,19 +728,35 @@ export default function Home() {
           />
 
           {/* Date */}
-          <input
-            type="date"
-            value={travelDate}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={e => setTravelDate(e.target.value)}
-            style={{
-              background: "rgba(255,255,255,0.04)",
-              border: `1px solid ${colors.glassBorder}`,
-              borderRadius: 12, padding: "14px 18px",
-              color: colors.textPrimary, fontSize: 14,
-              outline: "none", cursor: "pointer",
-              minWidth: 160,
-            }} />
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 12, padding: "14px 18px",
+            minWidth: 160,
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
+            <div style={{
+              fontSize: 10, color: colors.textMuted,
+              textTransform: "uppercase", letterSpacing: "0.07em",
+              marginBottom: 4,
+            }}>
+              Date
+            </div>
+            <input
+              type="date"
+              value={travelDate}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={e => setTravelDate(e.target.value)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: colors.textPrimary, fontSize: 14,
+                fontWeight: 700,
+                outline: "none", cursor: "pointer",
+                width: "100%",
+                colorScheme: "dark",
+              }} />
+          </div>
 
           {/* Search button */}
           <button
@@ -523,20 +770,22 @@ export default function Home() {
               boxShadow: "0 4px 20px rgba(59,130,246,0.4)",
               transition: "all 0.15s",
               letterSpacing: "0.02em",
+              flex: "1 1 auto",
             }}
             onMouseEnter={e => e.target.style.transform = "scale(1.03)"}
             onMouseLeave={e => e.target.style.transform = "scale(1)"}>
             Search Flights →
           </button>
         </div>
-      </GlassCard>
+      </div>
 
       {/* ── Charts Row ───────────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "1.6fr 1fr",
+        gridTemplateColumns: "clamp(1fr, 60%, 1.6fr) 1fr",
         gap: 20, marginBottom: 24,
-      }}>
+      }}
+      className="stack-mobile">
 
         {/* Price index trend */}
         <GlassCard>
@@ -735,10 +984,10 @@ export default function Home() {
       </GlassCard>
 
       {/* ── Index Stats Row ───────────────────────────────────────────────── */}
-      <div style={{
+            <div style={{
         display: "grid",
-        gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
-        gap: 16, marginBottom: 24,
+        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+        gap: 12, marginBottom: 20,
       }}>
         <GlassCard>
           <div style={{ fontSize: 13, fontWeight: 600,
@@ -844,6 +1093,8 @@ export default function Home() {
       </div>
 
       {/* ── Live Feed ─────────────────────────────────────────────────────── */}
+      <LiveStatusCard />
+
       <GlassCard>
         <div style={{ display: "flex", justifyContent: "space-between",
                       alignItems: "center", marginBottom: 16 }}>

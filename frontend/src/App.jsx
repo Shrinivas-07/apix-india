@@ -13,9 +13,10 @@ import Search          from "./pages/Search"
 import Analytics       from "./pages/Analytics"
 import Backtest        from "./pages/Backtest"
 import ApiDocs         from "./pages/ApiDocs"
-import { fetchLatestIndex } from "./api"
-import { gradients } from "./styles/theme"
-import NotFound from "./pages/NotFound"
+import Compare         from "./pages/Compare"
+import NotFound        from "./pages/NotFound"
+import { fetchLatestIndex, wakeServer } from "./api"
+import { gradients }   from "./styles/theme"
 
 export default function App() {
   const location = useLocation()
@@ -25,6 +26,11 @@ export default function App() {
     fetchLatestIndex()
       .then(d => setApix(d?.apix_value))
       .catch(() => {})
+  }, [])
+
+  // Wake Render server on app load (free tier sleeps)
+  useEffect(() => {
+    wakeServer()
   }, [])
 
   return (
@@ -59,6 +65,9 @@ export default function App() {
             } />
             <Route path="/search" element={
               <PageTransition><Search /></PageTransition>
+            } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
             } />
             <Route path="/analytics" element={
               <PageTransition><Analytics /></PageTransition>

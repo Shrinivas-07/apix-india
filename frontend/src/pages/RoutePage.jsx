@@ -6,6 +6,7 @@ import {
   XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine, Cell
 } from "recharts"
+import FareRangeChart from "../components/FareRangeChart"
 import GlassCard    from "../components/GlassCard"
 import LiveBadge    from "../components/LiveBadge"
 import Skeleton     from "../components/Skeleton"
@@ -372,8 +373,9 @@ export default function RoutePage() {
       </GlassCard>
 
       {/* ── Tabs ─────────────────────────────────────────────────────────── */}
-      <div style={{ display: "flex", gap: 8, marginBottom: 24,
-                    flexWrap: "wrap" }}>
+            <div style={{ display:"flex", gap:8, marginBottom:24,
+                    flexWrap:"wrap", overflowX:"auto",
+                    paddingBottom:4 }}>
         {[
           { key:"overview",  label:"Overview"       },
           { key:"calendar",  label:"Price Calendar" },
@@ -611,10 +613,11 @@ export default function RoutePage() {
       {/* ── Tab: All Carriers ─────────────────────────────────────────────── */}
       {tab === "carriers" && (
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 16,
+                      <div style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(min(280px,100%), 1fr))",
+              gap: 16,
+            
           }}>
             {carriers
               .sort((a,b) => a.fare - b.fare)
@@ -821,6 +824,25 @@ export default function RoutePage() {
               </div>
             )
           )}
+
+                      {/* Fare range chart */}
+            {detail?.lead_time_curve?.length > 0 && (
+              <div style={{ marginTop:24 }}>
+                <div style={{ fontSize:14, fontWeight:600,
+                              color:colors.textPrimary,
+                              marginBottom:4 }}>
+                  Fare Range Analysis
+                </div>
+                <div style={{ fontSize:12, color:colors.textSecondary,
+                              marginBottom:14 }}>
+                  Min · Avg · Max range per booking window
+                </div>
+                <FareRangeChart
+                  data={detail.lead_time_curve}
+                  height={220}
+                />
+              </div>
+            )}
 
           {/* Route stats table */}
           <div style={{ marginTop: 24 }}>

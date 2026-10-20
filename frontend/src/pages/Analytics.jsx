@@ -8,7 +8,7 @@ import {
 } from "recharts"
 import GlassCard from "../components/GlassCard"
 import Skeleton  from "../components/Skeleton"
-import { fetchRoutes } from "../api"
+import { fetchRoutes, fetchAnalyticsSummary } from "../api"
 import { colors, glass } from "../styles/theme"
 
 // ── Mock analytics data ───────────────────────────────────────────────────────
@@ -162,9 +162,9 @@ function SavingsCalculator() {
       </div>
 
       {/* Results */}
-      <div style={{ display:"grid",
-                    gridTemplateColumns:"repeat(3,1fr)",
-                    gap:14 }}>
+            <div style={{ display:"grid",
+                    gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",
+                    gap:12 }}>
         {[
           { label:"Last-minute fare", value:`₹${lastMin.toLocaleString("en-IN")}`,
             sub:"T+1 booking", color:colors.red },
@@ -209,11 +209,25 @@ export default function Analytics() {
   const [routes,  setRoutes]  = useState([])
   const [activeTab, setActiveTab] = useState("patterns")
 
+    const [windowData, setWindowData] = useState([])
+
   useEffect(() => {
-    fetchRoutes()
-      .then(r => setRoutes(r.routes || []))
-      .catch(console.error)
-      .finally(() => setLoading(false))
+    async function load() {
+      try {
+        const [r, a] = await Promise.all([
+          fetchRoutes(),
+          fetchAnalyticsSummary(),
+        ])
+        setRoutes(r.routes || [])
+        if (a.window_summary?.length > 0) {
+          setWindowData(a.window_summary)
+        }
+      } catch (error) {
+        console.error(error)
+      }
+      finally { setLoading(false) }
+    }
+    load()
   }, [])
 
   const correlation = generateCorrelation(routes)
@@ -509,9 +523,9 @@ export default function Analytics() {
           </GlassCard>
 
           {/* Festival cards */}
-          <div style={{ display:"grid",
-                        gridTemplateColumns:"repeat(auto-fill,minmax(280px,1fr))",
-                        gap:16 }}>
+           <div style={{ display:"grid",
+                        gridTemplateColumns:"repeat(auto-fill,minmax(min(280px,100%),1fr))",
+                        gap:14 }}>
             {FESTIVALS.sort((a,b) => b.surge-a.surge).map(f => (
               <GlassCard key={f.name} style={{
                 borderLeft:`3px solid ${
@@ -576,6 +590,18 @@ export default function Analytics() {
       {activeTab === "savings" && (
         <div style={{ display:"flex", flexDirection:"column", gap:20 }}>
           <SavingsCalculator />
+
+                      {windowData.length > 0 && (
+              <div style={{ marginBottom:16, padding:"12px 16px",
+                            background:"rgba(59,130,246,0.08)",
+                            border:"1px solid rgba(59,130,246,0.2)",
+                            borderRadius:10, fontSize:12,
+                            color:colors.textSecondary }}>
+                📊 Live data: {windowData[0]?.count ?? 0} fares
+                analysed across {windowData.length} advance windows
+                from last 30 days of scraping
+              </div>
+            )} 
 
           <GlassCard>
             <div style={{ fontSize:16, fontWeight:700,

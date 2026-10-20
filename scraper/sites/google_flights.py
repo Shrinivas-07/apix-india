@@ -1,52 +1,54 @@
-# scraper/sites/google_flights.py  — rename this file too (explained below)
-# Strategy: scrape Google Flights which shows all Indian carriers together
-# Much more reliable than individual airline sites for price collection
+# scraper/sites/google_flights.py
+# Scrapes Google Flights using direct search URLs with carrier and price extraction
+# Highly reliable — bypasses form filling and directly queries the route & date
 
 import asyncio
 import json
 import re
 import os
+import urllib.parse
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
+
+CARRIERS_LIST = [
+    "IndiGo",
+    "Air India",
+    "Akasa Air",
+    "SpiceJet",
+    "Vistara",
+    "Air India Express",
+    "Alliance Air",
+    "Star Air",
+]
 
 
 async def scrape_google_flights(origin: str, destination: str, travel_date: str):
     """
     Scrapes fares from Google Flights for a given route and date.
-    Returns fares from ALL carriers shown (IndiGo, Air India, Akasa, SpiceJet etc.)
+    Returns list of fare records with extracted airline carriers.
     
     origin       : IATA code e.g. "DEL"
     destination  : IATA code e.g. "BOM"  
     travel_date  : "YYYY-MM-DD"
     """
     fares = []
+    origin = origin.upper().strip()
+    destination = destination.upper().strip()
 
-    # Google Flights URL format — direct search URL, no form filling needed
-    url = (
-        f"https://www.google.com/travel/flights/search"
-        f"?tfs=CBwQAhoeEgoyMDI2MDkxNApIAFILCgsvbS8wMWZsZHQgARoAQAFIAXABggELCP___________wGYAQI"
-    )
+    # Direct search URL using Google Flights natural query interface
+    query = f"Flights from {origin} to {destination} on {travel_date} one way"
+    encoded_query = urllib.parse.quote_plus(query)
+    search_url = f"https://www.google.com/travel/flights?q={encoded_query}&hl=en&gl=in&curr=INR"
 
-    # Build proper Google Flights URL
-    # Format: /flights?hl=en&gl=in&curr=INR
-    dt = datetime.strptime(travel_date, "%Y-%m-%d")
-    date_formatted = dt.strftime("%Y-%m-%d")
+    print(f"\n[GoogleFlights] Searching {origin} -> {destination} on {travel_date}")
+    print(f"[GoogleFlights] URL: {search_url}")
 
-    # Direct URL that works reliably
-    search_url = (
-        f"https://www.google.com/travel/flights?"
-        f"hl=en&gl=in&curr=INR"
-    )
-
-    print(f"\n[GoogleFlights] Searching {origin} → {destination} on {travel_date}")
+    is_ci = os.environ.get("CI", "false").lower() == "true"
+    headless = True if is_ci else True  # Set headless True for speed and stability
 
     async with async_playwright() as p:
-                # Auto-detect if running in CI/GitHub Actions
-        is_ci = os.environ.get("CI", "false").lower() == "true"
-
         browser = await p.chromium.launch(
-            headless=True if is_ci else False,
-            slow_mo=0 if is_ci else 80,
+            headless=headless,
             args=[
                 "--disable-blink-features=AutomationControlled",
                 "--no-sandbox",
@@ -68,236 +70,130 @@ async def scrape_google_flights(origin: str, destination: str, travel_date: str)
         )
         page = await context.new_page()
 
-        # Hide automation signals
+        # Hide webdriver flag
         await page.add_init_script("""
             Object.defineProperty(navigator, 'webdriver', {get: () => undefined});
         """)
 
         try:
-            # ── 1. Open Google Flights ────────────────────────────────────────
-            print("[GoogleFlights] Opening Google Flights...")
-            await page.goto(
-                "https://www.google.com/travel/flights",
-                timeout=30000,
-                wait_until="domcontentloaded"
-            )
-            await page.wait_for_timeout(3000)
-            await page.screenshot(path="scraper/debug_gf_step1.png")
-            print("[GoogleFlights] Step 1 screenshot saved")
+            print("[GoogleFlights] Opening direct flight search...")
+            await page.goto(search_url, timeout=35000, wait_until="domcontentloaded")
+            await page.wait_for_timeout(4000)
 
-            # ── 2. Handle cookie consent (appears in India sometimes) ─────────
-            for txt in ["Accept all", "Accept All", "I agree", "Agree"]:
+            # Handle cookie consent dialogs if present
+            for txt in ["Accept all", "Accept All", "I agree", "Agree", "Got it"]:
                 try:
-                    btn = page.get_by_role("button", name=txt)
+                    btn = page.get_by_role("button", name=txt).first
                     if await btn.is_visible():
                         await btn.click()
                         print(f"[GoogleFlights] Accepted cookies: {txt}")
-                        await page.wait_for_timeout(1500)
+                        await page.wait_for_timeout(1000)
                         break
-                except:
+                except Exception:
                     pass
 
-            # ── 3. Clear and set Origin ───────────────────────────────────────
-            print(f"[GoogleFlights] Setting origin: {origin}")
-
-            # Google Flights origin input
-            origin_input = page.locator('input[placeholder="Where from?"]').first
-            try:
-                await origin_input.wait_for(timeout=8000)
-                await origin_input.click()
-                await page.wait_for_timeout(500)
-                # Select all existing text and replace
-                await origin_input.press("Control+a")
-                await origin_input.press("Backspace")
-                await page.wait_for_timeout(300)
-                await origin_input.type(origin, delay=100)
-                await page.wait_for_timeout(2000)
-
-                # Click the first suggestion in the dropdown
-                first_suggestion = page.locator('li[role="option"]').first
-                await first_suggestion.wait_for(timeout=5000)
-                await first_suggestion.click()
-                print(f"[GoogleFlights] Origin '{origin}' selected")
-                await page.wait_for_timeout(1000)
-            except Exception as e:
-                print(f"[GoogleFlights] Origin input issue: {e}")
-                await page.screenshot(path="scraper/debug_gf_origin_fail.png")
-
-            # ── 4. Set Destination ────────────────────────────────────────────
-            print(f"[GoogleFlights] Setting destination: {destination}")
-
-            dest_input = page.locator('input[placeholder="Where to?"]').first
-            try:
-                await dest_input.wait_for(timeout=8000)
-                await dest_input.click()
-                await page.wait_for_timeout(500)
-                await dest_input.press("Control+a")
-                await dest_input.press("Backspace")
-                await page.wait_for_timeout(300)
-                await dest_input.type(destination, delay=100)
-                await page.wait_for_timeout(2000)
-
-                first_suggestion = page.locator('li[role="option"]').first
-                await first_suggestion.wait_for(timeout=5000)
-                await first_suggestion.click()
-                print(f"[GoogleFlights] Destination '{destination}' selected")
-                await page.wait_for_timeout(1000)
-            except Exception as e:
-                print(f"[GoogleFlights] Destination input issue: {e}")
-                await page.screenshot(path="scraper/debug_gf_dest_fail.png")
-
-            # ── 5. Set Date ───────────────────────────────────────────────────
-            print(f"[GoogleFlights] Setting date: {travel_date}")
-
-            try:
-                # Click the departure date field
-                date_btn = page.locator(
-                    '[data-placeholder="Departure"], '
-                    'input[placeholder="Departure"], '
-                    '[aria-label*="Departure date"]'
-                ).first
-                await date_btn.click()
-                await page.wait_for_timeout(1500)
-
-                # Type the date in the input that appears
-                date_input = page.locator('input[placeholder="Departure"]').first
-                await date_input.fill(date_formatted)
-                await page.wait_for_timeout(1000)
-
-                # Press Enter or click Done to confirm date
-                await page.keyboard.press("Enter")
-                await page.wait_for_timeout(1000)
-
-                # Click Done button if it appears
-                try:
-                    done_btn = page.get_by_role("button", name="Done")
-                    if await done_btn.is_visible():
-                        await done_btn.click()
-                except:
-                    pass
-
-                print("[GoogleFlights] Date set")
-                await page.wait_for_timeout(1000)
-            except Exception as e:
-                print(f"[GoogleFlights] Date issue: {e}")
-                await page.screenshot(path="scraper/debug_gf_date_fail.png")
-
-            await page.screenshot(path="scraper/debug_gf_step3_before_search.png")
-            print("[GoogleFlights] Before-search screenshot saved")
-
-            # ── 6. Click Search ───────────────────────────────────────────────
-            print("[GoogleFlights] Clicking Search...")
-            try:
-                search_btn = page.get_by_role("button", name="Search").first
-                await search_btn.click()
-                print("[GoogleFlights] Search clicked")
-            except:
-                await page.keyboard.press("Enter")
-                print("[GoogleFlights] Pressed Enter to search")
-
-            # ── 7. Wait for results ───────────────────────────────────────────
-            print("[GoogleFlights] Waiting 12 seconds for all flights to load...")
-            await page.wait_for_timeout(12000)
-            await page.screenshot(path="scraper/debug_gf_step4_results.png")
-            print("[GoogleFlights] Results screenshot saved")
-
-            # ── 8. Scroll down to load more results ───────────────────────────
-            await page.evaluate("window.scrollBy(0, 1000)")
+            # Wait for search results to render
             await page.wait_for_timeout(3000)
-            await page.evaluate("window.scrollBy(0, 1000)")
+
+            # Scroll to load more flight cards
+            await page.evaluate("window.scrollBy(0, 800)")
             await page.wait_for_timeout(2000)
 
-            # ── 9. Extract fares ──────────────────────────────────────────────
             page_text = await page.inner_text("body")
+            lines = [line.strip() for line in page_text.split("\n") if line.strip()]
 
-            # Save raw text for debugging
-            with open("scraper/debug_raw_page_text.txt", "w", encoding="utf-8") as f:
-                f.write(page_text)
-            print("[GoogleFlights] Raw page text saved to debug_raw_page_text.txt")
+            # Extract carrier-associated fares
+            seen_combos = set()
 
-            # Find all ₹ prices
-            raw_prices = re.findall(r'₹\s*([0-9,]+)', page_text)
-            print(f"[GoogleFlights] Found {len(raw_prices)} ₹ price values")
+            for i, line in enumerate(lines):
+                matched_carrier = None
+                for c in CARRIERS_LIST:
+                    if c.lower() in line.lower() and len(line) < 45:
+                        matched_carrier = c
+                        break
 
-            # Find carrier names mentioned near prices
-            carriers_found = []
-            for carrier in ["IndiGo", "Air India", "Akasa", "SpiceJet",
-                            "Vistara", "Star Air", "Alliance Air"]:
-                if carrier.lower() in page_text.lower():
-                    carriers_found.append(carrier)
-            print(f"[GoogleFlights] Carriers mentioned: {carriers_found}")
+                if matched_carrier:
+                    # Look nearby for ₹ prices within a small line window
+                    context_chunk = " ".join(lines[max(0, i - 3):min(len(lines), i + 8)])
+                    price_match = re.search(r'₹\s*([0-9,]+)', context_chunk)
+                    if price_match:
+                        try:
+                            price = int(price_match.group(1).replace(",", "").strip())
+                            if 1500 <= price <= 45000:
+                                combo = (matched_carrier, price)
+                                if combo not in seen_combos:
+                                    seen_combos.add(combo)
+                                    fares.append({
+                                        "carrier": matched_carrier,
+                                        "origin": origin,
+                                        "destination": destination,
+                                        "travel_date": travel_date,
+                                        "scraped_at": datetime.now().isoformat(),
+                                        "total_fare": price,
+                                        "base_fare": round(price * 0.82),
+                                        "taxes": round(price * 0.18),
+                                        "currency": "INR",
+                                        "fare_class": "Economy",
+                                        "source": "google_flights",
+                                    })
+                        except Exception:
+                            continue
 
-            seen = set()
-            for price_str in raw_prices:
-                try:
-                    price = int(price_str.replace(",", "").strip())
-                    if 1500 <= price <= 40000 and price not in seen:
-                        seen.add(price)
-                        record = {
-                            "carrier": "Multiple",  # Google shows all carriers
-                            "origin": origin,
-                            "destination": destination,
-                            "travel_date": travel_date,
-                            "scraped_at": datetime.now().isoformat(),
-                            "total_fare": price,
-                            "base_fare": round(price * 0.82),
-                            "taxes": round(price * 0.18),
-                            "currency": "INR",
-                            "fare_class": "Economy",
-                            "source": "google_flights",
-                        }
-                        fares.append(record)
-                except:
-                    continue
+            # Fallback: if carrier matching was too strict, grab distinct reasonable prices
+            if not fares:
+                raw_prices = re.findall(r'₹\s*([0-9,]+)', page_text)
+                seen_prices = set()
+                for p_str in raw_prices:
+                    try:
+                        price = int(p_str.replace(",", "").strip())
+                        if 1500 <= price <= 40000 and price not in seen_prices:
+                            seen_prices.add(price)
+                            fares.append({
+                                "carrier": "Domestic Airline",
+                                "origin": origin,
+                                "destination": destination,
+                                "travel_date": travel_date,
+                                "scraped_at": datetime.now().isoformat(),
+                                "total_fare": price,
+                                "base_fare": round(price * 0.82),
+                                "taxes": round(price * 0.18),
+                                "currency": "INR",
+                                "fare_class": "Economy",
+                                "source": "google_flights",
+                            })
+                    except Exception:
+                        continue
 
-            # Sort by price
             fares.sort(key=lambda x: x["total_fare"])
 
         except Exception as e:
-            print(f"[GoogleFlights] Exception: {e}")
+            print(f"[GoogleFlights] Scrape error: {e}")
             try:
+                os.makedirs("scraper", exist_ok=True)
                 await page.screenshot(path="scraper/debug_gf_exception.png")
-            except:
+            except Exception:
                 pass
-
         finally:
-            await page.wait_for_timeout(4000)
             await browser.close()
 
-    print(f"[GoogleFlights] Done. Collected {len(fares)} fare records.")
+    print(f"[GoogleFlights] Collected {len(fares)} fare records for {origin}->{destination}.")
     return fares
 
 
 # ── Test directly ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     import sys
-    sys.path.append(".")  # so we can import from scraper/
+    sys.path.insert(0, ".")
     from scraper.database import setup_database, save_fares, get_stats
 
-    # Setup DB if not already done
     setup_database()
 
-    # Scrape tomorrow's fares
-    tomorrow = (datetime.now() + timedelta(days=1)).strftime("%Y-%m-%d")
+    tomorrow = (datetime.now() + timedelta(days=7)).strftime("%Y-%m-%d")
     results = asyncio.run(scrape_google_flights("DEL", "BOM", tomorrow))
 
     print("\n" + "=" * 55)
-    print(f"  SCRAPED — {len(results)} fares for DEL → BOM")
+    print(f"  SCRAPED -- {len(results)} fares for DEL -> BOM (T+7)")
     print("=" * 55)
     for i, r in enumerate(results[:15], 1):
-        print(f"  {i:2}. ₹{r['total_fare']:>7,}  "
-              f"(base ₹{r['base_fare']:,} + taxes ₹{r['taxes']:,})")
-
-    # Save to database — T+1 means 1 day advance purchase
-    saved = save_fares(results, advance_days=1)
-
-    # Show updated stats
-    print("\nDatabase stats after scrape:")
-    stats = get_stats()
-    for k, v in stats.items():
-        print(f"  {k}: {v}")
-
-    # Also save JSON backup
-    with open("scraper/google_flights_output.json", "w") as f:
-        json.dump(results, f, indent=2)
-    print(f"\nJSON backup → scraper/google_flights_output.json")
+        print(f"  {i:2}. {r['carrier']:<18} INR {r['total_fare']:>6,}  "
+              f"(base INR {r['base_fare']:,} + tax INR {r['taxes']:,})")

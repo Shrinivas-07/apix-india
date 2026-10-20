@@ -1,7 +1,9 @@
 // src/components/Navbar.jsx
-import { NavLink, useLocation } from "react-router-dom"
-import { useState } from "react"
-import { colors, glass, gradients } from "../styles/theme"
+import { NavLink } from "react-router-dom"
+import { useEffect, useState } from "react"
+import { colors, glass } from "../styles/theme"
+
+const BACKEND_URL = "https://apix-india-api.onrender.com"
 
 const links = [
   { to: "/",          label: "Home",      icon: "⌂" },
@@ -9,13 +11,48 @@ const links = [
   { to: "/routes",    label: "Routes",    icon: "🗺" },
   { to: "/search",    label: "Search",    icon: "🔍" },
   { to: "/analytics", label: "Analytics", icon: "📊" },
+  { to: "/compare",   label: "Compare",   icon: "⚖" },
   { to: "/backtest",  label: "Back-test", icon: "✅" },
   { to: "/api",       label: "API Docs",  icon: "🔌" },
 ]
 
 export default function Navbar({ apix }) {
   const [menuOpen, setMenuOpen] = useState(false)
-  const location = useLocation()
+  const [scrapeStatus, setScrapeStatus] = useState(null)
+
+  useEffect(() => {
+    async function loadScrapeStatus() {
+      try {
+        const response = await fetch(
+          `${import.meta.env.VITE_BACKEND_URL ?? BACKEND_URL}/api/live/status`
+        )
+        if (response.ok) {
+          setScrapeStatus(await response.json())
+        }
+      } catch {}
+    }
+
+    loadScrapeStatus()
+    const timer = setInterval(loadScrapeStatus, 5 * 60 * 1000)
+    return () => clearInterval(timer)
+  }, [])
+
+  function formatScrapeStatus(status) {
+  if (status?.status === "fresh") return "LIVE"
+  if (status?.minutes_ago == null) return "OFFLINE"
+
+  const minutes = status.minutes_ago
+
+  if (minutes >= 1440) {
+    return `STALE · ${Math.floor(minutes / 1440)}d ago`
+  }
+
+  if (minutes >= 60) {
+    return `STALE · ${Math.floor(minutes / 60)}h ago`
+  }
+
+  return `STALE · ${minutes}m ago`
+}
 
   return (
     <>
@@ -85,6 +122,39 @@ export default function Navbar({ apix }) {
         </div>
 
         {/* Live APIx pill */}
+
+
+                 {scrapeStatus && (
+  <div
+    style={{
+      fontSize: 10,
+      color: scrapeStatus.status === "fresh"
+        ? colors.green
+        : colors.amber,
+      display: "flex",
+      alignItems: "center",
+      gap: 4,
+    }}
+    title={`Last scrape: ${scrapeStatus.minutes_ago ?? "unknown"} min ago`}
+  >
+    <span
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: "50%",
+        background: scrapeStatus.status === "fresh"
+          ? colors.green
+          : colors.amber,
+        display: "inline-block",
+      }}
+    />
+
+    {formatScrapeStatus(scrapeStatus)}
+  </div>
+)}
+
+
+        
         <div style={{
           display: "flex", alignItems: "center", gap: 10
         }}>
@@ -103,11 +173,14 @@ export default function Navbar({ apix }) {
             </div>
           )}
 
+
+                
+
           {/* Mobile menu button */}
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             style={{
-              display: "none", // shown via media query
+              
               background: "transparent", border: "none",
               color: colors.textPrimary, fontSize: 20,
               cursor: "pointer", padding: 8,

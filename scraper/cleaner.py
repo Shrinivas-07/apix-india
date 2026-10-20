@@ -38,10 +38,10 @@ def clean_fares(fares: list, origin: str, destination: str) -> list:
     route_type = classify_route(origin, destination)
     bounds = FARE_BOUNDS[route_type]
 
-    cleaned   = []
-    seen_prices = set()
-    removed   = 0
-    outliers  = 0
+    cleaned     = []
+    seen_keys   = set()
+    removed     = 0
+    outliers    = 0
 
     for fare in fares:
         # ── 1. Must have a total fare ─────────────────────────────────────────
@@ -50,11 +50,14 @@ def clean_fares(fares: list, origin: str, destination: str) -> list:
             removed += 1
             continue
 
-        # ── 2. Remove exact duplicates ────────────────────────────────────────
-        if total in seen_prices:
+        # ── 2. Remove duplicates keyed by carrier, travel_date, and price ─────
+        carrier = fare.get("carrier", "Unknown")
+        travel_date = fare.get("travel_date")
+        dedup_key = (carrier, travel_date, total)
+        if dedup_key in seen_keys:
             removed += 1
             continue
-        seen_prices.add(total)
+        seen_keys.add(dedup_key)
 
         # ── 3. Flag outliers (keep them but mark) ─────────────────────────────
         base = fare.get("base_fare", round(total * 0.82))
@@ -65,7 +68,7 @@ def clean_fares(fares: list, origin: str, destination: str) -> list:
             fare["is_outlier"] = 0
 
         # ── 4. Ensure all fields exist ────────────────────────────────────────
-        fare.setdefault("carrier",     "Unknown")
+        fare.setdefault("carrier",     carrier)
         fare.setdefault("currency",    "INR")
         fare.setdefault("fare_class",  "Economy")
         fare.setdefault("base_fare",   round(total * 0.82))
@@ -74,8 +77,8 @@ def clean_fares(fares: list, origin: str, destination: str) -> list:
 
         cleaned.append(fare)
 
-    print(f"[Cleaner] {origin}→{destination}: "
-          f"{len(fares)} raw → {len(cleaned)} clean "
+    print(f"[Cleaner] {origin}->{destination}: "
+          f"{len(fares)} raw -> {len(cleaned)} clean "
           f"({removed} removed, {outliers} outliers flagged)")
 
     return cleaned
@@ -84,13 +87,14 @@ def clean_fares(fares: list, origin: str, destination: str) -> list:
 # ── Test directly ─────────────────────────────────────────────────────────────
 if __name__ == "__main__":
     test_data = [
-        {"total_fare": 4500, "base_fare": 3690, "taxes": 810},
-        {"total_fare": 4500, "base_fare": 3690, "taxes": 810},  # duplicate
-        {"total_fare": 500,  "base_fare": 410,  "taxes": 90},   # too cheap → outlier
+        {"carrier": "IndiGo",    "travel_date": "2026-11-01", "total_fare": 4500, "base_fare": 3690, "taxes": 810},
+        {"carrier": "IndiGo",    "travel_date": "2026-11-01", "total_fare": 4500, "base_fare": 3690, "taxes": 810},  # duplicate
+        {"carrier": "Air India", "travel_date": "2026-11-01", "total_fare": 4500, "base_fare": 3690, "taxes": 810},  # valid different airline
+        {"total_fare": 500,  "base_fare": 410,  "taxes": 90},   # too cheap -> outlier
         {"total_fare": 6200, "base_fare": 5084, "taxes": 1116},
         {"total_fare": None},                                     # invalid
     ]
     result = clean_fares(test_data, "DEL", "BOM")
     print(f"\nCleaned records: {len(result)}")
     for r in result:
-        print(f"  ₹{r['total_fare']:,}  outlier={r['is_outlier']}")
+        print(f"  {r.get('carrier')}: INR {r['total_fare']:,}  outlier={r['is_outlier']}")

@@ -3,7 +3,7 @@ import { useState } from "react"
 import GlassCard from "../components/GlassCard"
 import { colors, glass } from "../styles/theme"
 
-const BASE_URL = "https://your-render-url.onrender.com"
+const BASE_URL = "https://apix-india-api.onrender.com"
 
 const ENDPOINTS = [
   {

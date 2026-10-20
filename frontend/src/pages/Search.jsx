@@ -9,6 +9,7 @@ import {
 import GlassCard    from "../components/GlassCard"
 import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
+import { fetchSearchFares } from "../api"
 import { colors, glass } from "../styles/theme"
 
 // ── Airport data ──────────────────────────────────────────────────────────────
@@ -146,6 +147,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false)
+        setFocused(false)
       }
     }
     document.addEventListener("mousedown", handleClick)
@@ -153,47 +155,65 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
   }, [])
 
   return (
-    <div ref={ref} style={{ position:"relative", flex:1, minWidth:180 }}>
+    <div ref={ref} style={{
+      position:"relative",
+      flex:"1 1 240px",
+      minWidth:0,
+      zIndex: open ? 50 : 1,
+    }}>
       <div
-        onClick={() => { setOpen(true); setFocused(true) }}
+        onClick={() => { const next = !open; setOpen(next); setFocused(next) }}
         style={{
-          ...glass.card, padding:"14px 18px",
-          cursor:"pointer", borderRadius:14,
-          border: focused
+          padding: "14px 52px 14px 18px",
+          cursor: "pointer", borderRadius: 14,
+          position: "relative",
+          background: "#111d35",
+          border: open || focused
             ? `1px solid ${colors.blue}`
-            : `1px solid ${colors.glassBorder}`,
-          transition:"border-color 0.2s",
+            : "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          transition: "border-color 0.2s",
         }}>
-        <div style={{ fontSize:10, color:colors.textMuted,
-                      textTransform:"uppercase",
-                      letterSpacing:"0.07em", marginBottom:4 }}>
+        <div style={{ fontSize: 10, color: colors.textMuted,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em", marginBottom: 4 }}>
           {placeholder}
         </div>
         {selected ? (
           <div>
-            <div style={{ fontSize:22, fontWeight:800,
-                          color:colors.textPrimary,
-                          letterSpacing:"-0.5px" }}>
+            <div style={{ fontSize: 22, fontWeight: 800,
+                          color: colors.textPrimary,
+                          letterSpacing: "-0.5px" }}>
               {selected.code}
             </div>
-            <div style={{ fontSize:12, color:colors.textSecondary }}>
-              {selected.city} · {selected.name.slice(0,25)}
+            <div style={{ fontSize: 12, color: colors.textSecondary }}>
+              {selected.city} · {selected.name}
             </div>
           </div>
         ) : (
-          <div style={{ fontSize:16, color:colors.textMuted }}>
+          <div style={{ fontSize: 16, color: colors.textMuted }}>
             Select airport
           </div>
         )}
+        <span style={{
+          position: "absolute", right: 18, top: "50%",
+          transform: "translateY(-50%)",
+          color: open || focused ? colors.blue : colors.textSecondary,
+          fontSize: 12, fontWeight: 700,
+        }}>
+          {open ? "▲" : "▼"}
+        </span>
       </div>
 
       {open && (
         <div style={{
-          position:"absolute", top:"calc(100% + 8px)",
-          left:0, right:0, zIndex:9999,
-          ...glass.strong, borderRadius:14, padding:8,
-          maxHeight:300, overflowY:"auto",
-          boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
+          position: "absolute", top: "calc(100% + 8px)",
+          left: 0, right: 0, zIndex: 9999,
+          background: "#0d1528",
+          border: "1px solid rgba(255, 255, 255, 0.15)",
+          boxShadow: "0 20px 48px rgba(0, 0, 0, 0.6)",
+          borderRadius: 14, padding: 8,
+          maxHeight: 300, overflowY: "auto",
         }}>
           <input
             autoFocus
@@ -201,12 +221,12 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Search city, airport or code..."
             style={{
-              width:"100%", marginBottom:6,
-              background:"rgba(255,255,255,0.06)",
-              border:`1px solid ${colors.border}`,
-              borderRadius:8, padding:"8px 12px",
-              color:colors.textPrimary, fontSize:13,
-              outline:"none",
+              width: "100%", marginBottom: 6,
+              background: "#070d1a",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 8, padding: "8px 12px",
+              color: colors.textPrimary, fontSize: 13,
+              outline: "none", boxSizing: "border-box",
             }} />
           {filtered.length === 0 ? (
             <div style={{ padding:"12px", color:colors.textMuted,
@@ -216,6 +236,13 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
           ) : filtered.map(a => (
             <div
               key={a.code}
+              onMouseDown={e => {
+                e.preventDefault()
+                onChange(a.code)
+                setOpen(false)
+                setFocused(false)
+                setQuery("")
+              }}
               onClick={() => {
                 onChange(a.code)
                 setOpen(false)
@@ -229,7 +256,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
                 justifyContent:"space-between",
               }}
               onMouseEnter={e =>
-                e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
               onMouseLeave={e =>
                 e.currentTarget.style.background = "transparent"}>
               <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -250,7 +277,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
                     {a.city}
                   </div>
                   <div style={{ fontSize:11, color:colors.textSecondary }}>
-                    {a.name.slice(0,30)}
+                    {a.name}
                   </div>
                 </div>
               </div>
@@ -429,21 +456,49 @@ export default function Search() {
     }
   }, [])
 
-  function handleSearch() {
+    async function handleSearch() {
     if (!from || !to || from === to) return
     setSearching(true)
     setSearched(false)
 
-    // Simulate network delay
-    setTimeout(() => {
+    try {
+      // Try real API first
+      const data = await fetchSearchFares(from, to, date)
+      const real = data.fares ?? []
+
+      if (real.length > 0) {
+        // Use real data — enrich with display fields
+        const enriched = real.map((f, i) => ({
+          ...f,
+          flight_number:  f.flight_number ?? `XX-${100+i}`,
+          departure_time: f.departure_time ?? ["06:00","08:30","11:00","14:30","18:00"][i%5],
+          arrival_time:   f.arrival_time   ?? ["08:10","10:45","13:15","16:40","20:10"][i%5],
+          duration:       f.duration       ?? "2h 10m",
+          total_fare:     f.total_fare     ?? (f.base_fare + f.taxes),
+          total_price:    (f.total_fare ?? (f.base_fare + f.taxes)) * passengers,
+          passengers,
+          stops:          0,
+          ontime:         Math.round(75 + Math.random() * 20),
+        }))
+        setResults(enriched)
+        setMaxFare(Math.max(...enriched.map(f => f.total_fare)) + 1000)
+      } else {
+        // Fall back to generated data
+        const r = generateResults(from, to, date, passengers)
+        setResults(r)
+        setMaxFare(Math.max(...r.map(f => f.total_fare)) + 1000)
+      }
+    } catch {
+      // Fall back to generated data on error
       const r = generateResults(from, to, date, passengers)
-      const h = generatePriceHistory(from, to, date)
       setResults(r)
-      setHistory(h)
       setMaxFare(Math.max(...r.map(f => f.total_fare)) + 1000)
-      setSearching(false)
-      setSearched(true)
-    }, 1200)
+    }
+
+    // Always generate history chart (no real historical per-search data yet)
+    setHistory(generatePriceHistory(from, to, date))
+    setSearching(false)
+    setSearched(true)
   }
 
   // ── Filtered + sorted results ─────────────────────────────────────────────
@@ -495,7 +550,17 @@ export default function Search() {
       </div>
 
       {/* ── Search form ──────────────────────────────────────────────────── */}
-      <GlassCard style={{ marginBottom:28, padding:24, overflow:"visible" }}>
+      <div style={{
+        marginBottom: 28,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
+      }}>
         <div style={{ display:"flex", gap:12,
                       alignItems:"flex-end", flexWrap:"wrap" }}>
 
@@ -507,13 +572,14 @@ export default function Search() {
           <button
             onClick={() => { const t=from; setFrom(to); setTo(t) }}
             style={{
-              background:glass.card.background,
-              border:`1px solid ${colors.glassBorder}`,
-              borderRadius:12, color:colors.textPrimary,
-              width:48, height:48, cursor:"pointer",
-              fontSize:18, flexShrink:0, display:"flex",
-              alignItems:"center", justifyContent:"center",
-              transition:"all 0.15s",
+              background: "#111d35",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 12, color: colors.textPrimary,
+              width: 48, height: 48, cursor: "pointer",
+              fontSize: 18, flexShrink: 0, display: "flex",
+              alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+              transition: "all 0.15s",
             }}
             onMouseEnter={e => e.currentTarget.style.transform="rotate(180deg)"}
             onMouseLeave={e => e.currentTarget.style.transform="rotate(0deg)"}>
@@ -525,8 +591,13 @@ export default function Search() {
             placeholder="To" exclude={from} />
 
           {/* Date */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14, minWidth:160 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14, minWidth: 160,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -541,12 +612,18 @@ export default function Search() {
                 color:colors.textPrimary, fontSize:15,
                 fontWeight:700, outline:"none",
                 cursor:"pointer", width:"100%",
+                colorScheme: "dark",
               }} />
           </div>
 
           {/* Passengers */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14, minWidth:100 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14, minWidth: 100,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -578,8 +655,13 @@ export default function Search() {
           </div>
 
           {/* Class */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -625,7 +707,7 @@ export default function Search() {
             Origin and destination cannot be the same
           </div>
         )}
-      </GlassCard>
+      </div>
 
       {/* ── Searching skeleton ────────────────────────────────────────────── */}
       {searching && (
@@ -644,13 +726,18 @@ export default function Search() {
 
       {/* ── Results ───────────────────────────────────────────────────────── */}
       {searched && !searching && (
-        <div style={{ display:"grid",
-                      gridTemplateColumns:"280px 1fr",
-                      gap:20, alignItems:"start" }}>
+                  <div style={{
+            display:"grid",
+            gridTemplateColumns:"clamp(220px, 25%, 280px) 1fr",
+            gap:20, alignItems:"start",
+          }}
+          className="stack-mobile">
 
           {/* ── Sidebar filters ───────────────────────────────────────────── */}
-          <div style={{ display:"flex", flexDirection:"column",
-                        gap:16, position:"sticky", top:80 }}>
+                    <div style={{ display:"flex", flexDirection:"column",
+                        gap:16, position:"sticky", top:80,
+                        maxHeight:"calc(100vh - 100px)",
+                        overflowY:"auto" }}>
 
             {/* Route summary */}
             <GlassCard style={{ padding:18 }}>
