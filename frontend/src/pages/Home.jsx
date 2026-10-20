@@ -178,53 +178,41 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
               outline: "none", marginBottom: 6,
               boxSizing: "border-box",
             }} />
-          {filtered.map(a => (
-            <div
-              key={a.code}
-              onClick={() => {
-                onChange(a.code)
-                setOpen(false)
-                setQuery("")
-              }}
-              style={{ padding: "12px 14px", borderRadius: 10, cursor: "pointer", transition: "background 0.12s", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "transparent"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: colors.blue, fontFamily: "monospace" }}>
-                  {a.code}
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>{a.city}</div>
-                  <div style={{ fontSize: 11, color: colors.textSecondary }}>{a.name}</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 11, color: colors.textMuted }}>{a.state}</div>
+          {filtered.length === 0 ? (
+            <div style={{ padding: "12px", color: colors.textMuted, fontSize: 13, textAlign: "center" }}>
+              No airports found
             </div>
           ) : (
             filtered.map(a => (
-              <div key={a.code}
+              <div
+                key={a.code}
                 onMouseDown={e => {
                   e.preventDefault()
                   onChange(a.code)
                   setOpen(false)
                   setQuery("")
                 }}
-                onClick={() => { onChange(a.code); setOpen(false); setQuery("") }}
-                style={{
-                  padding: "12px 14px", borderRadius: 10,
-                  cursor: "pointer", transition: "background 0.12s",
-                  display: "flex", alignItems: "center",
-                  justifyContent: "space-between",
+                onClick={() => {
+                  onChange(a.code)
+                  setOpen(false)
+                  setQuery("")
                 }}
-                onMouseEnter={e =>
-                  e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
-                onMouseLeave={e =>
-                  e.currentTarget.style.background = "transparent"}>
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  transition: "background 0.12s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)"
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "transparent"
+                }}
+              >
                 <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
                   <div style={{
                     width: 40, height: 40, borderRadius: 10,
@@ -233,23 +221,16 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
                     display: "flex", alignItems: "center",
                     justifyContent: "center",
                     fontSize: 13, fontWeight: 800, color: colors.blue,
-                    fontFamily: "monospace",
+                    fontFamily: "monospace"
                   }}>
                     {a.code}
                   </div>
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 600,
-                                   color: colors.textPrimary }}>
-                      {a.city}
-                    </div>
-                    <div style={{ fontSize: 11, color: colors.textSecondary }}>
-                      {a.name}
-                    </div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>{a.city}</div>
+                    <div style={{ fontSize: 11, color: colors.textSecondary }}>{a.name}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 11, color: colors.textMuted }}>
-                  {a.state}
-                </div>
+                <div style={{ fontSize: 11, color: colors.textMuted }}>{a.state}</div>
               </div>
             ))
           )}
@@ -507,7 +488,17 @@ export default function Home() {
         />
       </div>
 
-      <GlassCard style={{ marginBottom: 32, padding: 24, overflow: "visible", position: "relative", zIndex: 10 }}>
+      <div style={{
+        marginBottom: 32,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
+      }}>
         <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 14, fontWeight: 500 }}>🔍 Search flights</div>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
           <AirportSelect value={searchFrom} onChange={setSearchFrom} placeholder="From" exclude={searchTo} />

@@ -557,12 +557,16 @@ export default function Search() {
       </div>
 
       {/* ── Search form ──────────────────────────────────────────────────── */}
-      <GlassCard style={{
-        marginBottom:28,
-        padding:24,
-        overflow:"visible",
-        position:"relative",
-        zIndex:10,
+      <div style={{
+        marginBottom: 28,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
       }}>
         <div style={{ display:"flex", gap:12,
                       alignItems:"flex-end", flexWrap:"wrap" }}>
