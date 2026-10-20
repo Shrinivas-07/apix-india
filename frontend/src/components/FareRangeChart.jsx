@@ -62,12 +62,8 @@ function RangeTooltip({ active, payload, label }) {
 
   return (
     <div style={{
-      background: "#0d1528",
-      border: "1px solid #1e293b",
-      padding: "14px 18px",
-      borderRadius: 12,
-      minWidth: 180,
-      boxShadow: "0 8px 24px rgba(0,0,0,0.5)"
+      ...glass.strong, padding:"14px 18px",
+      borderRadius:12, minWidth:180,
     }}>
       <div style={{ fontSize:12, color:colors.textMuted,
                     marginBottom:8 }}>

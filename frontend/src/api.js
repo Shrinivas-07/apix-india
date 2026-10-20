@@ -389,75 +389,39 @@ export async function fetchRouteDetail(origin, destination) {
 }
 
 export async function fetchStats() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/stats`)
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return {
-    status: "ok",
-    stats: {
-      total_fare_records: 8181,
-      unique_routes: 8,
-      latest_apix: 99.35
-    },
-    routes: DEFAULT_ROUTES
-  }
+  const res = await fetch(`${BACKEND_URL}/api/stats`)
+  if (!res.ok) throw new Error("Failed to fetch stats")
+  return res.json()
 }
 
 export async function fetchHealth() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/`)
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return { status: "ok" }
+  const res = await fetch(`${BACKEND_URL}/`)
+  if (!res.ok) throw new Error("Failed to fetch health status")
+  return res.json()
 }
 
 export async function wakeServer() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/`)
-    if (!res.ok) return null
-    return res.json()
-  } catch (e) {
-    return null
-  }
+  const res = await fetch(`${BACKEND_URL}/`)
+  if (!res.ok) throw new Error("Failed to wake server")
+  return res.json()
 }
 
 export async function fetchLiveFeed(limit = 20) {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/live/feed?limit=${limit}`)
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return { status: "ok", feed: [] }
+  const res = await fetch(`${BACKEND_URL}/api/live/feed?limit=${limit}`)
+  if (!res.ok) throw new Error("Failed to fetch live feed")
+  return res.json()
 }
 
 export async function fetchSearchFares(origin, destination, date, limit = 100) {
   const params = new URLSearchParams({ origin, destination, limit: String(limit) })
   if (date) params.set("date", date)
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/search?${params}`)
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return { status: "ok", fares: [] }
-}
-
-export async function searchFares(origin, destination, date = "") {
-  return fetchSearchFares(origin, destination, date)
-}
-
-export async function fetchRouteFares(origin, destination, advanceDays = 7) {
-  try {
-    const res = await fetch(
-      `${BACKEND_URL}/api/route/${origin}/${destination}/fares?advance_days=${advanceDays}`
-    )
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return { status: "ok", fares: [] }
+  const res = await fetch(`${BACKEND_URL}/api/search?${params}`)
+  if (!res.ok) throw new Error("Failed to search fares")
+  return res.json()
 }
 
 export async function fetchAnalyticsSummary() {
-  try {
-    const res = await fetch(`${BACKEND_URL}/api/analytics/summary`)
-    if (res.ok) return await res.json()
-  } catch (e) {}
-  return { status: "ok", summary: {} }
+  const res = await fetch(`${BACKEND_URL}/api/analytics/summary`)
+  if (!res.ok) throw new Error("Failed to fetch analytics summary")
+  return res.json()
 }

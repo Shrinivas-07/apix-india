@@ -16,8 +16,7 @@ import BookingPanel from "../components/BookingPanel"
 import Skeleton     from "../components/Skeleton"
 import {
   fetchLatestIndex, fetchIndexHistory,
-  fetchRoutes, fetchStats, fetchLiveFeed,
-  DEFAULT_ROUTES, DEFAULT_HISTORY
+  fetchRoutes, fetchStats, fetchLiveFeed
 } from "../api"
 const BACKEND_URL = "https://apix-india-api.onrender.com"
 import { colors, glass, gradients, text, spacing, radius } from "../styles/theme"
@@ -26,26 +25,21 @@ import { colors, glass, gradients, text, spacing, radius } from "../styles/theme
 
 // ── Airport data for search ───────────────────────────────────────────────────
 const AIRPORTS = [
-  { code:"DEL", name:"Indira Gandhi International", city:"Delhi",       state:"Delhi"         },
-  { code:"BOM", name:"Chhatrapati Shivaji International", city:"Mumbai", state:"Maharashtra"  },
-  { code:"BLR", name:"Kempegowda International",    city:"Bengaluru",  state:"Karnataka"     },
-  { code:"CCU", name:"Netaji Subhas Chandra Bose",  city:"Kolkata",    state:"West Bengal"   },
-  { code:"MAA", name:"Chennai International",        city:"Chennai",    state:"Tamil Nadu"    },
-  { code:"HYD", name:"Rajiv Gandhi International",  city:"Hyderabad",  state:"Telangana"     },
-  { code:"GOI", name:"Goa International (Dabolim)", city:"Goa",        state:"Goa"           },
-  { code:"AMD", name:"Sardar Vallabhbhai Patel",    city:"Ahmedabad",  state:"Gujarat"       },
-  { code:"PNQ", name:"Pune International",           city:"Pune",       state:"Maharashtra"   },
-  { code:"JAI", name:"Jaipur International",         city:"Jaipur",     state:"Rajasthan"     },
-  { code:"COK", name:"Cochin International",         city:"Kochi",      state:"Kerala"        },
-  { code:"ATQ", name:"Sri Guru Ram Dass Jee Intl",  city:"Amritsar",   state:"Punjab"        },
-  { code:"LKO", name:"Chaudhary Charan Singh Intl", city:"Lucknow",    state:"Uttar Pradesh" },
-  { code:"BBI", name:"Biju Patnaik International",  city:"Bhubaneswar",state:"Odisha"        },
-  { code:"GAU", name:"Lokpriya Gopinath Bordoloi",  city:"Guwahati",   state:"Assam"         },
-  { code:"IXC", name:"Chandigarh International",    city:"Chandigarh", state:"Chandigarh"    },
-  { code:"VNS", name:"Lal Bahadur Shastri Intl",   city:"Varanasi",   state:"Uttar Pradesh" },
-  { code:"PAT", name:"Jay Prakash Narayan Intl",    city:"Patna",      state:"Bihar"         },
-  { code:"IXR", name:"Birsa Munda Airport",         city:"Ranchi",     state:"Jharkhand"     },
-  { code:"SXR", name:"Sheikh ul-Alam International",city:"Srinagar",   state:"J&K"           },
+  { code:"DEL", name:"Indira Gandhi Intl", city:"Delhi", state:"Delhi" },
+  { code:"BOM", name:"Chhatrapati Shivaji Intl", city:"Mumbai", state:"Maharashtra" },
+  { code:"BLR", name:"Kempegowda Intl", city:"Bengaluru", state:"Karnataka" },
+  { code:"CCU", name:"Netaji Subhas Chandra Bose Intl", city:"Kolkata", state:"West Bengal" },
+  { code:"MAA", name:"Chennai Intl", city:"Chennai", state:"Tamil Nadu" },
+  { code:"HYD", name:"Rajiv Gandhi Intl", city:"Hyderabad", state:"Telangana" },
+  { code:"GOI", name:"Goa Intl", city:"Goa", state:"Goa" },
+  { code:"AMD", name:"Sardar Vallabhbhai Patel Intl", city:"Ahmedabad", state:"Gujarat" },
+  { code:"PNQ", name:"Pune Intl", city:"Pune", state:"Maharashtra" },
+  { code:"JAI", name:"Jaipur Intl", city:"Jaipur", state:"Rajasthan" },
+  { code:"COK", name:"Cochin Intl", city:"Kochi", state:"Kerala" },
+  { code:"ATQ", name:"Sri Guru Ram Dass Jee Intl", city:"Amritsar", state:"Punjab" },
+  { code:"LKO", name:"Chaudhary Charan Singh Intl", city:"Lucknow", state:"Uttar Pradesh" },
+  { code:"BBI", name:"Biju Patnaik Intl", city:"Bhubaneswar", state:"Odisha" },
+  { code:"GAU", name:"Lokpriya Gopinath Bordoloi Intl", city:"Guwahati", state:"Assam" },
 ]
 
 // ── Mock flight data per route ────────────────────────────────────────────────
@@ -188,26 +182,27 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
   }, [])
 
   return (
-    <div ref={ref} style={{
+    <div style={{
       position: "relative",
       flex: "1 1 220px",
       minWidth: 0,
-      zIndex: open ? 50 : 1,
+      zIndex: open ? 20 : 1,
     }}>
       <div
         onClick={() => setOpen(!open)}
         style={{
-          padding: "14px 52px 14px 18px",
+          ...glass.card, padding: "14px 52px 14px 18px",
           cursor: "pointer", display: "flex",
           flexDirection: "column", alignItems: "stretch",
           justifyContent: "center", position: "relative",
           borderRadius: 12,
-          background: "#111d35",
-          boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+          background: colors.bgTertiary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
           border: open
             ? `1px solid ${colors.blue}`
-            : "1px solid rgba(255, 255, 255, 0.1)",
-          transition: "border-color 0.2s",
+            : `1px solid ${colors.borderStrong}`,
         }}>
         <div style={{
           fontSize: 10,
@@ -235,9 +230,8 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
           </div>
         )}
         <span style={{
-          color: open ? colors.blue : colors.textSecondary,
+          color: colors.textMuted,
           fontSize: 12,
-          fontWeight: 700,
           position: "absolute",
           right: 18,
           top: "50%",
@@ -249,13 +243,15 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
 
       {open && (
         <div style={{
-          position: "absolute", top: "calc(100% + 8px)", left: 0, right: 0,
-          zIndex: 9999,
-          background: "#0d1528",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          boxShadow: "0 20px 48px rgba(0, 0, 0, 0.6)",
-          borderRadius: 14,
-          padding: 8, maxHeight: 300, overflowY: "auto",
+          position: "absolute", top: "100%", left: 0, right: 0,
+          zIndex: 1000, marginTop: 8,
+          ...glass.strong, borderRadius: 14,
+          background: colors.bgSecondary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          border: `1px solid ${colors.borderStrong}`,
+          boxShadow: "0 20px 48px rgba(0,0,0,0.55)",
+          padding: 8, maxHeight: 280, overflowY: "auto",
         }}>
           <input
             autoFocus
@@ -263,17 +259,51 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Search city, airport or code..."
             style={{
-              width: "100%", background: "#070d1a",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
+              width: "100%", background: colors.bg,
+              border: `1px solid ${colors.border}`,
               borderRadius: 8, padding: "8px 12px",
               color: colors.textPrimary, fontSize: 13,
               outline: "none", marginBottom: 6,
               boxSizing: "border-box",
             }} />
-          {filtered.length === 0 ? (
-            <div style={{ padding: "12px", color: colors.textMuted,
-                          fontSize: 13, textAlign: "center" }}>
-              No airports found
+          {filtered.map(a => (
+            <div key={a.code}
+              onClick={() => { onChange(a.code); setOpen(false); setQuery("") }}
+              style={{
+                padding: "12px 14px", borderRadius: 10,
+                cursor: "pointer", transition: "background 0.12s",
+                display: "flex", alignItems: "center",
+                justifyContent: "space-between",
+              }}
+              onMouseEnter={e =>
+                e.currentTarget.style.background = "rgba(255,255,255,0.06)"}
+              onMouseLeave={e =>
+                e.currentTarget.style.background = "transparent"}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div style={{
+                  width: 40, height: 40, borderRadius: 10,
+                  background: "rgba(59,130,246,0.12)",
+                  border: "1px solid rgba(59,130,246,0.2)",
+                  display: "flex", alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: 13, fontWeight: 800, color: colors.blue,
+                  fontFamily: "monospace",
+                }}>
+                  {a.code}
+                </div>
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600,
+                                color: colors.textPrimary }}>
+                    {a.city}
+                  </div>
+                  <div style={{ fontSize: 11, color: colors.textSecondary }}>
+                    {a.name}
+                  </div>
+                </div>
+              </div>
+              <div style={{ fontSize: 11, color: colors.textMuted }}>
+                {a.state}
+              </div>
             </div>
           ) : (
             filtered.map(a => (
@@ -673,16 +703,12 @@ export default function Home() {
       </div>
 
       {/* ── Search Bar ───────────────────────────────────────────────────── */}
-      <div style={{
+      <GlassCard style={{
         marginBottom: 32,
         padding: 24,
         overflow: "visible",
         position: "relative",
         zIndex: 10,
-        background: "#0d1528",
-        borderRadius: 16,
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
       }}>
         <div style={{ fontSize: 13, color: colors.textSecondary,
                       marginBottom: 14, fontWeight: 500 }}>

@@ -159,20 +159,25 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
       position:"relative",
       flex:"1 1 240px",
       minWidth:0,
-      zIndex: open ? 50 : 1,
+      zIndex: open ? 20 : 1,
     }}>
       <div
-        onClick={() => { const next = !open; setOpen(next); setFocused(next) }}
+        onClick={() => {
+          const nextOpen = !open
+          setOpen(nextOpen)
+          setFocused(nextOpen)
+        }}
         style={{
-          padding: "14px 52px 14px 18px",
-          cursor: "pointer", borderRadius: 14,
-          position: "relative",
-          background: "#111d35",
-          border: open || focused
+          ...glass.card, padding:"14px 52px 14px 18px",
+          cursor:"pointer", borderRadius:14, position:"relative",
+          background: colors.bgTertiary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          boxShadow: "0 8px 24px rgba(0,0,0,0.28)",
+          border: focused
             ? `1px solid ${colors.blue}`
-            : "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
-          transition: "border-color 0.2s",
+            : `1px solid ${colors.borderStrong}`,
+          transition:"border-color 0.2s",
         }}>
         <div style={{ fontSize: 10, color: colors.textMuted,
                       textTransform: "uppercase",
@@ -198,7 +203,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
         <span style={{
           position: "absolute", right: 18, top: "50%",
           transform: "translateY(-50%)",
-          color: open || focused ? colors.blue : colors.textSecondary,
+          color: focused ? colors.blue : colors.textSecondary,
           fontSize: 12, fontWeight: 700,
         }}>
           {open ? "▲" : "▼"}
@@ -207,13 +212,15 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
 
       {open && (
         <div style={{
-          position: "absolute", top: "calc(100% + 8px)",
-          left: 0, right: 0, zIndex: 9999,
-          background: "#0d1528",
-          border: "1px solid rgba(255, 255, 255, 0.15)",
-          boxShadow: "0 20px 48px rgba(0, 0, 0, 0.6)",
-          borderRadius: 14, padding: 8,
-          maxHeight: 300, overflowY: "auto",
+          position:"absolute", top:"calc(100% + 8px)",
+          left:0, right:0, zIndex:9999,
+          ...glass.strong, borderRadius:14, padding:8,
+          background: colors.bgSecondary,
+          backdropFilter: "none",
+          WebkitBackdropFilter: "none",
+          border: `1px solid ${colors.borderStrong}`,
+          maxHeight:300, overflowY:"auto",
+          boxShadow:"0 20px 60px rgba(0,0,0,0.5)",
         }}>
           <input
             autoFocus
@@ -221,12 +228,12 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
             onChange={e => setQuery(e.target.value)}
             placeholder="Search city, airport or code..."
             style={{
-              width: "100%", marginBottom: 6,
-              background: "#070d1a",
-              border: "1px solid rgba(255, 255, 255, 0.1)",
-              borderRadius: 8, padding: "8px 12px",
-              color: colors.textPrimary, fontSize: 13,
-              outline: "none", boxSizing: "border-box",
+              width:"100%", marginBottom:6,
+              background:colors.bg,
+              border:`1px solid ${colors.border}`,
+              borderRadius:8, padding:"8px 12px",
+              color:colors.textPrimary, fontSize:13,
+              outline:"none",
             }} />
           {filtered.length === 0 ? (
             <div style={{ padding:"12px", color:colors.textMuted,
@@ -550,16 +557,12 @@ export default function Search() {
       </div>
 
       {/* ── Search form ──────────────────────────────────────────────────── */}
-      <div style={{
-        marginBottom: 28,
-        padding: 24,
-        overflow: "visible",
-        position: "relative",
-        zIndex: 10,
-        background: "#0d1528",
-        borderRadius: 16,
-        border: "1px solid rgba(255, 255, 255, 0.08)",
-        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
+      <GlassCard style={{
+        marginBottom:28,
+        padding:24,
+        overflow:"visible",
+        position:"relative",
+        zIndex:10,
       }}>
         <div style={{ display:"flex", gap:12,
                       alignItems:"flex-end", flexWrap:"wrap" }}>

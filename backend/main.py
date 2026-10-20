@@ -12,15 +12,20 @@
 # Run locally:  uvicorn backend.main:app --reload --port 8000
 # Then open:    http://localhost:8000/docs  (auto API docs)
 
+from fastapi import WebSocket, WebSocketDisconnect
+from typing import List
+from contextlib import asynccontextmanager
+import asyncio
 import sys
 import os
 import json
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import List
 
 sys.path.insert(0, ".")
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, HTTPException, Query, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
@@ -38,11 +43,88 @@ from backend.database import (
 # Import routes config
 from scraper.routes import ROUTES
 
+# Import live scraper (lazy import to avoid startup errors)
+try:
+    from backend.live_scraper import live_scraper_loop
+except ImportError:
+    async def live_scraper_loop(interval_minutes=15):
+        pass
+
+    # ── WebSocket connection manager ──────────────────────────────────────────────
+class ConnectionManager:
+    """Manages all active WebSocket connections."""
+
+    def __init__(self):
+        self.active: List[WebSocket] = []
+
+    async def connect(self, ws: WebSocket):
+        await ws.accept()
+        self.active.append(ws)
+        print(f"[WS] Client connected. Total: {len(self.active)}")
+
+    def disconnect(self, ws: WebSocket):
+        if ws in self.active:
+            self.active.remove(ws)
+        print(f"[WS] Client disconnected. Total: {len(self.active)}")
+
+    async def broadcast(self, data: dict):
+        """Send data to all connected clients."""
+        msg  = json.dumps(data)
+        dead = []
+        for ws in self.active:
+            try:
+                await ws.send_text(msg)
+            except Exception:
+                dead.append(ws)
+        for ws in dead:
+            self.disconnect(ws)
+
+    async def send_personal(self, ws: WebSocket, data: dict):
+        """Send data to one client."""
+        try:
+            await ws.send_text(json.dumps(data))
+        except Exception:
+            self.disconnect(ws)
+
+
+ws_manager = ConnectionManager()
+
 # ── App setup ─────────────────────────────────────────────────────────────────
+# ── Startup/shutdown lifecycle ────────────────────────────────────────────────
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Starts live scraper on startup, cleans up on shutdown."""
+    # Check if live scraping is enabled via env var
+    enable_live = os.getenv("ENABLE_LIVE_SCRAPER", "false").lower() == "true"
+
+    if enable_live:
+        print("[Startup] Live scraper ENABLED — starting background task")
+        task = asyncio.create_task(live_scraper_loop(interval_minutes=15))
+    else:
+        print("[Startup] Live scraper DISABLED — set ENABLE_LIVE_SCRAPER=true to enable")
+        task = None
+         # Always start WebSocket broadcast loop
+    broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
+    print("[Startup] WebSocket broadcast loop started")
+
+    broadcast_task = asyncio.create_task(broadcast_loop(interval_seconds=30))
+    print("[Startup] WebSocket broadcast loop started")
+
+    yield  # Server runs here
+
+    # Cleanup on shutdown
+    if task:
+        task.cancel()
+        print("[Shutdown] Live scraper stopped")
+    broadcast_task.cancel()
+    print("[Shutdown] Broadcast loop stopped")
+
+
 app = FastAPI(
     title="APIx — India Airfare Price Index",
     description="Real-time airfare price index for India. Built for MoSPI/NSO.",
     version="1.0.0",
+    lifespan=lifespan,
 )
 
 # Allow dashboard (any origin) to call this API
@@ -704,9 +786,161 @@ def get_analytics_summary():
                 })
 
         return {
-            "total_records":  len(fares),
-            "window_summary": window_summary,
-            "period_days":    30,
+        "total_records":  len(fares),
+        "window_summary": window_summary,
+        "period_days":    30,
+    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/live/status")
+def get_live_status():
+    """
+    Returns live scraper status and last scrape time.
+    """
+    try:
+        recent = supabase_get("raw_fares", {
+            "select":  "scraped_at,origin,destination",
+            "order":   "scraped_at.desc",
+            "limit":   "1",
+        })
+
+        last_scrape = None
+        last_route = None
+        minutes_ago = None
+
+        if recent:
+            last_scrape = recent[0]["scraped_at"]
+            last_route = f"{recent[0]['origin']}-{recent[0]['destination']}"
+            dt = datetime.fromisoformat(last_scrape.replace("Z", "+00:00"))
+            minutes_ago = round((datetime.now(dt.tzinfo) - dt).total_seconds() / 60)
+
+        enabled = os.getenv("ENABLE_LIVE_SCRAPER", "false").lower() == "true"
+
+        return {
+            "live_scraper_enabled": enabled,
+            "last_scrape": last_scrape,
+            "last_route": last_route,
+            "minutes_ago": minutes_ago,
+            "status": "fresh" if (minutes_ago is not None and minutes_ago < 20)
+                      else "stale" if (minutes_ago is not None and minutes_ago < 60)
+                      else "old",
+            "interval_minutes": 15,
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.websocket("/ws/live")
+async def websocket_live(websocket: WebSocket):
+    """
+    WebSocket endpoint for live dashboard updates.
+    Sends fresh data every 30 seconds to all connected clients.
+    """
+    await ws_manager.connect(websocket)
+
+    try:
+        # Send initial data immediately on connect
+        initial = await build_live_payload()
+        await ws_manager.send_personal(websocket, initial)
+
+        # Keep connection alive — client sends pings
+        while True:
+            try:
+                # Wait for ping from client (timeout 60s)
+                data = await asyncio.wait_for(
+                    websocket.receive_text(), timeout=60.0
+                )
+                if data == "ping":
+                    await ws_manager.send_personal(
+                        websocket, {"type": "pong"}
+                    )
+            except asyncio.TimeoutError:
+                # Send keepalive
+                await ws_manager.send_personal(
+                    websocket, {"type": "keepalive",
+                                "ts": datetime.now().isoformat()}
+                )
+    except WebSocketDisconnect:
+        ws_manager.disconnect(websocket)
+    except Exception as e:
+        print(f"[WS] Error: {e}")
+        ws_manager.disconnect(websocket)
+
+
+async def build_live_payload() -> dict:
+    """Builds the data packet sent to all WebSocket clients."""
+    try:
+        # Latest index
+        index_rows = supabase_get("daily_index", {
+            "select": "index_date,apix_value,routes_used",
+            "order":  "index_date.desc",
+            "limit":  "1",
+        })
+        latest_index = index_rows[0] if index_rows else None
+
+        # Recent fares for live feed
+        cutoff = (datetime.now() - timedelta(hours=2)).isoformat()
+        recent_fares = supabase_get("raw_fares", {
+            "select":     "carrier,origin,destination,base_fare,scraped_at",
+            "is_outlier": "eq.false",
+            "scraped_at": f"gte.{cutoff}",
+            "order":      "scraped_at.desc",
+            "limit":      "10",
+        })
+
+        # Route averages
+        route_data = supabase_get("raw_fares", {
+            "select":     "origin,destination,base_fare",
+            "is_outlier": "eq.false",
+            "scraped_at": f"gte.{cutoff}",
+            "limit":      "200",
+        })
+
+        # Build route averages
+        route_avgs = {}
+        for f in route_data:
+            key = f"{f['origin']}-{f['destination']}"
+            if key not in route_avgs:
+                route_avgs[key] = []
+            route_avgs[key].append(f["base_fare"])
+        route_summary = {
+            k: round(sum(v)/len(v))
+            for k, v in route_avgs.items()
+        }
+
+        return {
+            "type":          "update",
+            "timestamp":     datetime.now().isoformat(),
+            "apix":          float(latest_index["apix_value"])
+                             if latest_index else None,
+            "index_date":    latest_index["index_date"]
+                             if latest_index else None,
+            "recent_fares":  recent_fares,
+            "route_avgs":    route_summary,
+            "client_count":  len(ws_manager.active),
+        }
+    except Exception as e:
+        print(f"[WS] Payload error: {e}")
+        return {
+            "type":      "error",
+            "message":   str(e),
+            "timestamp": datetime.now().isoformat(),
+        }
+
+
+# ── Broadcast loop ────────────────────────────────────────────────────────────
+async def broadcast_loop(interval_seconds: int = 30):
+    """Broadcasts fresh data to all WebSocket clients every N seconds."""
+    print(f"[WS] Broadcast loop started — interval: {interval_seconds}s")
+    await asyncio.sleep(10)  # Wait for startup
+
+    while True:
+        if ws_manager.active:
+            try:
+                payload = await build_live_payload()
+                await ws_manager.broadcast(payload)
+                print(f"[WS] Broadcast to {len(ws_manager.active)} clients")
+            except Exception as e:
+                print(f"[WS] Broadcast error: {e}")
+        await asyncio.sleep(interval_seconds)

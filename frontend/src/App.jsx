@@ -1,4 +1,5 @@
 // src/App.jsx
+import Compare from "./pages/Compare"
 import { Routes, Route, useLocation } from "react-router-dom"
 import { useState, useEffect } from "react"
 import { AnimatePresence } from "framer-motion"
@@ -13,10 +14,10 @@ import Search          from "./pages/Search"
 import Analytics       from "./pages/Analytics"
 import Backtest        from "./pages/Backtest"
 import ApiDocs         from "./pages/ApiDocs"
-import Compare         from "./pages/Compare"
-import NotFound        from "./pages/NotFound"
-import { fetchLatestIndex, wakeServer } from "./api"
-import { gradients }   from "./styles/theme"
+import { fetchLatestIndex } from "./api"
+import { gradients } from "./styles/theme"
+import NotFound from "./pages/NotFound"
+import { wakeServer } from "./api"
 
 export default function App() {
   const location = useLocation()
@@ -28,7 +29,7 @@ export default function App() {
       .catch(() => {})
   }, [])
 
-  // Wake Render server on app load (free tier sleeps)
+    // Wake Render server on app load (free tier sleeps)
   useEffect(() => {
     wakeServer()
   }, [])
@@ -78,8 +79,14 @@ export default function App() {
             <Route path="/api" element={
               <PageTransition><ApiDocs /></PageTransition>
             } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
+            } />
             <Route path="*" element={
               <PageTransition><NotFound /></PageTransition>
+            } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
             } />
           </Routes>
         </AnimatePresence>
