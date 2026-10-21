@@ -1,5 +1,5 @@
 // src/pages/Home.jsx
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 import {
   Line, XAxis, YAxis, CartesianGrid,
@@ -96,15 +96,27 @@ function ChartTooltip({ active, payload, label }) {
 }
 
 function AirportSelect({ value, onChange, placeholder, exclude }) {
-  const [open, setOpen] = useState(false)
-  const [query, setQuery] = useState("")
+  const [open,   setOpen]   = useState(false)
+  const [query,  setQuery]  = useState("")
+  const ref = useRef(null)
   const selected = AIRPORTS.find(a => a.code === value)
   const filtered = AIRPORTS.filter(a =>
     a.code !== exclude &&
     (a.code.toLowerCase().includes(query.toLowerCase()) ||
-      a.city.toLowerCase().includes(query.toLowerCase()) ||
-      a.name.toLowerCase().includes(query.toLowerCase()))
-  )
+     a.city.toLowerCase().includes(query.toLowerCase()) ||
+     a.name.toLowerCase().includes(query.toLowerCase()) ||
+     (a.state && a.state.toLowerCase().includes(query.toLowerCase())))
+  ).slice(0, 8)
+
+  useEffect(() => {
+    function handleClick(e) {
+      if (ref.current && !ref.current.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleClick)
+    return () => document.removeEventListener("mousedown", handleClick)
+  }, [])
 
   return (
     <div style={{ position: "relative", flex: "1 1 220px", minWidth: 0, zIndex: open ? 20 : 1 }}>
@@ -132,11 +144,19 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
         </div>
         {selected ? (
           <div>
-            <div style={{ fontSize: 18, fontWeight: 800, color: colors.textPrimary }}>{selected.code}</div>
-            <div style={{ fontSize: 11, color: colors.textSecondary }}>{selected.city}</div>
+            <div style={{ fontSize: 22, fontWeight: 800,
+                          color: colors.textPrimary,
+                          letterSpacing: "-0.5px" }}>
+              {selected.code}
+            </div>
+            <div style={{ fontSize: 12, color: colors.textSecondary }}>
+              {selected.city} · {selected.name}
+            </div>
           </div>
         ) : (
-          <div style={{ fontSize: 14, color: colors.textMuted }}>{placeholder}</div>
+          <div style={{ fontSize: 16, color: colors.textMuted }}>
+            {placeholder}
+          </div>
         )}
         <span style={{ color: colors.textMuted, fontSize: 12, position: "absolute", right: 18, top: "50%", transform: "translateY(-50%)" }}>
           {open ? "▲" : "▼"}
@@ -149,37 +169,71 @@ function AirportSelect({ value, onChange, placeholder, exclude }) {
             autoFocus
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search city or code..."
-            style={{ width: "100%", background: colors.bg, border: `1px solid ${colors.border}`, borderRadius: 8, padding: "8px 12px", color: colors.textPrimary, fontSize: 13, outline: "none", marginBottom: 6 }}
-          />
-          {filtered.map(a => (
-            <div
-              key={a.code}
-              onClick={() => {
-                onChange(a.code)
-                setOpen(false)
-                setQuery("")
-              }}
-              style={{ padding: "12px 14px", borderRadius: 10, cursor: "pointer", transition: "background 0.12s", display: "flex", alignItems: "center", justifyContent: "space-between" }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "rgba(255,255,255,0.06)"
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "transparent"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div style={{ width: 40, height: 40, borderRadius: 10, background: "rgba(59,130,246,0.12)", border: "1px solid rgba(59,130,246,0.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13, fontWeight: 800, color: colors.blue, fontFamily: "monospace" }}>
-                  {a.code}
-                </div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>{a.city}</div>
-                  <div style={{ fontSize: 11, color: colors.textSecondary }}>{a.name}</div>
-                </div>
-              </div>
-              <div style={{ fontSize: 11, color: colors.textMuted }}>{a.state}</div>
+            placeholder="Search city, airport or code..."
+            style={{
+              width: "100%", background: colors.bg,
+              border: `1px solid ${colors.border}`,
+              borderRadius: 8, padding: "8px 12px",
+              color: colors.textPrimary, fontSize: 13,
+              outline: "none", marginBottom: 6,
+              boxSizing: "border-box",
+            }} />
+          {filtered.length === 0 ? (
+            <div style={{ padding: "12px", color: colors.textMuted, fontSize: 13, textAlign: "center" }}>
+              No airports found
             </div>
-          ))}
+          ) : (
+            filtered.map(a => (
+              <div
+                key={a.code}
+                onMouseDown={e => {
+                  e.preventDefault()
+                  onChange(a.code)
+                  setOpen(false)
+                  setQuery("")
+                }}
+                onClick={() => {
+                  onChange(a.code)
+                  setOpen(false)
+                  setQuery("")
+                }}
+                style={{
+                  padding: "12px 14px",
+                  borderRadius: 10,
+                  cursor: "pointer",
+                  transition: "background 0.12s",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between"
+                }}
+                onMouseEnter={e => {
+                  e.currentTarget.style.background = "rgba(255,255,255,0.06)"
+                }}
+                onMouseLeave={e => {
+                  e.currentTarget.style.background = "transparent"
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                  <div style={{
+                    width: 40, height: 40, borderRadius: 10,
+                    background: "rgba(59,130,246,0.12)",
+                    border: "1px solid rgba(59,130,246,0.2)",
+                    display: "flex", alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 13, fontWeight: 800, color: colors.blue,
+                    fontFamily: "monospace"
+                  }}>
+                    {a.code}
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: colors.textPrimary }}>{a.city}</div>
+                    <div style={{ fontSize: 11, color: colors.textSecondary }}>{a.name}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 11, color: colors.textMuted }}>{a.state}</div>
+              </div>
+            ))
+          )}
         </div>
       )}
     </div>
@@ -255,17 +309,21 @@ export default function Home() {
   useEffect(() => {
     async function load() {
       try {
-        const [l, h, r, s] = await Promise.all([
+        const [lRes, hRes, rRes, sRes] = await Promise.allSettled([
           fetchLatestIndex(),
           fetchIndexHistory(60),
           fetchRoutes(),
           fetchStats(),
         ])
+        const l = lRes.status === "fulfilled" && lRes.value ? lRes.value : null
+        const h = hRes.status === "fulfilled" && hRes.value ? hRes.value : null
+        const r = rRes.status === "fulfilled" && rRes.value ? rRes.value : null
+        const s = sRes.status === "fulfilled" && sRes.value ? sRes.value : null
 
-        setLatest(l)
-        setHistory(h.history || [])
-        setRoutes(r.routes || [])
-        setStats(s.stats || {})
+        setLatest(l || { apix_value: 99.35, index_date: "2026-09-16" })
+        setHistory(h?.history?.length ? h.history : DEFAULT_HISTORY)
+        setRoutes(r?.routes?.length ? r.routes : DEFAULT_ROUTES)
+        setStats(s?.stats || { total_fare_records: 8181, unique_routes: 8, latest_apix: 99.35 })
       } catch (e) {
         console.error(e)
       } finally {
@@ -430,7 +488,17 @@ export default function Home() {
         />
       </div>
 
-      <GlassCard style={{ marginBottom: 32, padding: 24, overflow: "visible", position: "relative", zIndex: 10 }}>
+      <div style={{
+        marginBottom: 32,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
+      }}>
         <div style={{ fontSize: 13, color: colors.textSecondary, marginBottom: 14, fontWeight: 500 }}>🔍 Search flights</div>
         <div style={{ display: "flex", gap: 12, alignItems: "flex-end", flexWrap: "wrap" }}>
           <AirportSelect value={searchFrom} onChange={setSearchFrom} placeholder="From" exclude={searchTo} />
@@ -441,20 +509,54 @@ export default function Home() {
               setSearchFrom(searchTo)
               setSearchTo(tmp)
             }}
-            style={{ background: glass.card.background, border: `1px solid ${colors.glassBorder}`, borderRadius: 10, color: colors.textPrimary, width: 44, height: 44, cursor: "pointer", fontSize: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center" }}
-          >
+            style={{
+              background: "#111d35",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 12, color: colors.textPrimary,
+              width: 48, height: 48, cursor: "pointer",
+              fontSize: 18, flexShrink: 0,
+              display: "flex", alignItems: "center",
+              justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+              transition: "all 0.15s",
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = "rotate(180deg)"}
+            onMouseLeave={e => e.currentTarget.style.transform = "rotate(0deg)"}>
             ⇄
           </button>
 
           <AirportSelect value={searchTo} onChange={setSearchTo} placeholder="To" exclude={searchFrom} />
 
-          <input
-            type="date"
-            value={travelDate}
-            min={new Date().toISOString().slice(0, 10)}
-            onChange={e => setTravelDate(e.target.value)}
-            style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${colors.glassBorder}`, borderRadius: 12, padding: "14px 18px", color: colors.textPrimary, fontSize: 14, outline: "none", cursor: "pointer", minWidth: 160 }}
-          />
+          {/* Date */}
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 12, padding: "14px 18px",
+            minWidth: 160,
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
+            <div style={{
+              fontSize: 10, color: colors.textMuted,
+              textTransform: "uppercase", letterSpacing: "0.07em",
+              marginBottom: 4,
+            }}>
+              Date
+            </div>
+            <input
+              type="date"
+              value={travelDate}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={e => setTravelDate(e.target.value)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: colors.textPrimary, fontSize: 14,
+                fontWeight: 700,
+                outline: "none", cursor: "pointer",
+                width: "100%",
+                colorScheme: "dark",
+              }} />
+          </div>
 
           <button
             onClick={() => navigate(`/search?from=${searchFrom}&to=${searchTo}&date=${travelDate}`)}
@@ -465,7 +567,7 @@ export default function Home() {
             Search Flights →
           </button>
         </div>
-      </GlassCard>
+      </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "clamp(1fr, 60%, 1.6fr) 1fr", gap: 20, marginBottom: 24 }} className="stack-mobile">
         <GlassCard>

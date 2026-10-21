@@ -67,6 +67,9 @@ export default function App() {
             <Route path="/search" element={
               <PageTransition><Search /></PageTransition>
             } />
+            <Route path="/compare" element={
+              <PageTransition><Compare /></PageTransition>
+            } />
             <Route path="/analytics" element={
               <PageTransition><Analytics /></PageTransition>
             } />

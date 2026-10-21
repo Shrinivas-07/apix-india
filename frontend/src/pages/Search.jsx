@@ -147,6 +147,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
     function handleClick(e) {
       if (ref.current && !ref.current.contains(e.target)) {
         setOpen(false)
+        setFocused(false)
       }
     }
     document.addEventListener("mousedown", handleClick)
@@ -178,24 +179,24 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
             : `1px solid ${colors.borderStrong}`,
           transition:"border-color 0.2s",
         }}>
-        <div style={{ fontSize:10, color:colors.textMuted,
-                      textTransform:"uppercase",
-                      letterSpacing:"0.07em", marginBottom:4 }}>
+        <div style={{ fontSize: 10, color: colors.textMuted,
+                      textTransform: "uppercase",
+                      letterSpacing: "0.07em", marginBottom: 4 }}>
           {placeholder}
         </div>
         {selected ? (
           <div>
-            <div style={{ fontSize:22, fontWeight:800,
-                          color:colors.textPrimary,
-                          letterSpacing:"-0.5px" }}>
+            <div style={{ fontSize: 22, fontWeight: 800,
+                          color: colors.textPrimary,
+                          letterSpacing: "-0.5px" }}>
               {selected.code}
             </div>
-            <div style={{ fontSize:12, color:colors.textSecondary }}>
-              {selected.city} · {selected.name.slice(0,25)}
+            <div style={{ fontSize: 12, color: colors.textSecondary }}>
+              {selected.city} · {selected.name}
             </div>
           </div>
         ) : (
-          <div style={{ fontSize:16, color:colors.textMuted }}>
+          <div style={{ fontSize: 16, color: colors.textMuted }}>
             Select airport
           </div>
         )}
@@ -242,6 +243,13 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
           ) : filtered.map(a => (
             <div
               key={a.code}
+              onMouseDown={e => {
+                e.preventDefault()
+                onChange(a.code)
+                setOpen(false)
+                setFocused(false)
+                setQuery("")
+              }}
               onClick={() => {
                 onChange(a.code)
                 setOpen(false)
@@ -255,7 +263,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
                 justifyContent:"space-between",
               }}
               onMouseEnter={e =>
-                e.currentTarget.style.background = "rgba(255,255,255,0.07)"}
+                e.currentTarget.style.background = "rgba(255,255,255,0.08)"}
               onMouseLeave={e =>
                 e.currentTarget.style.background = "transparent"}>
               <div style={{ display:"flex", alignItems:"center", gap:12 }}>
@@ -276,7 +284,7 @@ function AirportInput({ value, onChange, placeholder, exclude }) {
                     {a.city}
                   </div>
                   <div style={{ fontSize:11, color:colors.textSecondary }}>
-                    {a.name.slice(0,30)}
+                    {a.name}
                   </div>
                 </div>
               </div>
@@ -549,12 +557,16 @@ export default function Search() {
       </div>
 
       {/* ── Search form ──────────────────────────────────────────────────── */}
-      <GlassCard style={{
-        marginBottom:28,
-        padding:24,
-        overflow:"visible",
-        position:"relative",
-        zIndex:10,
+      <div style={{
+        marginBottom: 28,
+        padding: 24,
+        overflow: "visible",
+        position: "relative",
+        zIndex: 10,
+        background: "#0d1528",
+        borderRadius: 16,
+        border: "1px solid rgba(255, 255, 255, 0.08)",
+        boxShadow: "0 12px 36px rgba(0, 0, 0, 0.4)",
       }}>
         <div style={{ display:"flex", gap:12,
                       alignItems:"flex-end", flexWrap:"wrap" }}>
@@ -567,13 +579,14 @@ export default function Search() {
           <button
             onClick={() => { const t=from; setFrom(to); setTo(t) }}
             style={{
-              background:glass.card.background,
-              border:`1px solid ${colors.glassBorder}`,
-              borderRadius:12, color:colors.textPrimary,
-              width:48, height:48, cursor:"pointer",
-              fontSize:18, flexShrink:0, display:"flex",
-              alignItems:"center", justifyContent:"center",
-              transition:"all 0.15s",
+              background: "#111d35",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+              borderRadius: 12, color: colors.textPrimary,
+              width: 48, height: 48, cursor: "pointer",
+              fontSize: 18, flexShrink: 0, display: "flex",
+              alignItems: "center", justifyContent: "center",
+              boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+              transition: "all 0.15s",
             }}
             onMouseEnter={e => e.currentTarget.style.transform="rotate(180deg)"}
             onMouseLeave={e => e.currentTarget.style.transform="rotate(0deg)"}>
@@ -585,8 +598,13 @@ export default function Search() {
             placeholder="To" exclude={from} />
 
           {/* Date */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14, minWidth:160 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14, minWidth: 160,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -601,12 +619,18 @@ export default function Search() {
                 color:colors.textPrimary, fontSize:15,
                 fontWeight:700, outline:"none",
                 cursor:"pointer", width:"100%",
+                colorScheme: "dark",
               }} />
           </div>
 
           {/* Passengers */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14, minWidth:100 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14, minWidth: 100,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -638,8 +662,13 @@ export default function Search() {
           </div>
 
           {/* Class */}
-          <div style={{ ...glass.card, padding:"14px 18px",
-                        borderRadius:14 }}>
+          <div style={{
+            background: "#111d35",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            borderRadius: 14,
+            padding: "14px 18px",
+            boxShadow: "0 4px 16px rgba(0, 0, 0, 0.25)",
+          }}>
             <div style={{ fontSize:10, color:colors.textMuted,
                           textTransform:"uppercase",
                           letterSpacing:"0.07em", marginBottom:4 }}>
@@ -685,7 +714,7 @@ export default function Search() {
             Origin and destination cannot be the same
           </div>
         )}
-      </GlassCard>
+      </div>
 
       {/* ── Searching skeleton ────────────────────────────────────────────── */}
       {searching && (

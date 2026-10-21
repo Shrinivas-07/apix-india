@@ -1,12 +1,22 @@
 {
-  "index_date": "2026-09-13",
-  "apix_value": 100.0,
+  "index_date": "2026-09-16",
+  "apix_value": 99.35,
   "advance_window": 7,
-  "routes_used": 8,
+  "routes_used": 1,
   "total_weight_used": 100.0,
-  "base_date": "2026-09-13",
-  "computed_at": "2026-09-13T10:19:17.466512",
+  "base_date": "2026-09-01",
+  "computed_at": "2026-10-20T17:50:50.369123",
   "route_breakdown": [
     {
       "route": "DEL-BOM",
-      "name": 
+      "name": "Delhi → Mumbai",
+      "weight": 100.0,
+      "base_fare": 3714.0,
+      "today_fare": 3690.0,
+      "route_index": 99.35,
+      "contribution": 99.3538,
+      "sample_count": 1,
+      "change_pct": -0.65
+    }
+  ]
+}

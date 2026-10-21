@@ -1,14 +1,14 @@
 {
-  "created_date": "2026-09-13",
+  "created_date": "2026-09-01",
   "headline_window": 7,
   "routes": {
-    "DEL-BOM": 12650.25,
-    "DEL-BLR": 12650.25,
-    "BOM-BLR": 12650.25,
-    "DEL-CCU": 12650.25,
-    "MAA-DEL": 12650.25,
-    "BLR-HYD": 12650.25,
-    "BOM-HYD": 12650.25,
-    "CCU-BOM": 12650.25
+    "DEL-BOM": 3714.0,
+    "DEL-BLR": 3145.0,
+    "BOM-BLR": 2790.0,
+    "DEL-CCU": 4096.0,
+    "MAA-DEL": 3509.0,
+    "BLR-HYD": 2243.0,
+    "BOM-HYD": 2608.0,
+    "CCU-BOM": 3756.0
   }
 }
